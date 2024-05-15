@@ -41,6 +41,7 @@ router.get('/', async (req, res) => {
     const userId = req.query.userId;  // Get user ID from query parameters
     const customers = await Customer.find({ userId: userId });  // Query to find customers by user ID
     res.json(customers);
+    console.log(customers);
   } catch (error) {
     console.error('Failed to retrieve customers:', error);
     res.status(500).json({ message: 'Failed to retrieve customers' });
