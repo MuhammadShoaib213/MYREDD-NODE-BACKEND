@@ -56,6 +56,11 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: 'Email is already registered' });
     }
 
+    const existingUserByCnic = await User.findOne({ cnic });
+    if (existingUserByCnic) {
+      return res.status(400).json({ message: 'CNIC is already registered' });
+    }
+
     const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = new User({
       firstName,
@@ -86,6 +91,10 @@ exports.login = async (req, res) => {
     const user = await User.findOne({ email }).select('+country');;
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    if (!user.is_verified) {
+      return res.status(403).json({ message: 'Your account is not verified. Please verify your OTP.' });
     }
 
     const token = jwt.sign(
@@ -309,6 +318,31 @@ exports.getProfile = async (req, res) => {
 // //   }
 // // };
 
+// exports.updateProfile = async (req, res) => {
+//   const userId = req.params.id;
+//   const updates = req.body; // This contains the text fields
+
+//   // Add image URLs if files were uploaded
+//   if (req.files['profilePicture']) {
+//     updates.profilePicture = req.files['profilePicture'][0].path;
+//   }
+//   if (req.files['businessLogo']) {
+//     updates.businessLogo = req.files['businessLogo'][0].path;
+//   }
+
+//   try {
+//     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+//     res.json({ message: 'Profile updated successfully', user });
+//     await user.save();
+//   } catch (error) {
+//     console.error('Error updating user profile:', error);
+//     res.status(500).json({ message: 'Internal server error', error: error.message });
+//   }
+// };
+
 exports.updateProfile = async (req, res) => {
   const userId = req.params.id;
   const updates = req.body; // This contains the text fields
@@ -330,9 +364,18 @@ exports.updateProfile = async (req, res) => {
     await user.save();
   } catch (error) {
     console.error('Error updating user profile:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
+
+    let errorMessage = 'Internal server error';
+    if (error.name === 'ValidationError') {
+      errorMessage = 'Validation error: ' + error.message;
+    } else if (error.name === 'CastError') {
+      errorMessage = `Invalid value for ${error.path}: ${error.value}`;
+    }
+
+    res.status(500).json({ message: errorMessage, error: error.message });
   }
 };
+
 
 exports.searchUsers = async (req, res) => {
   const { query } = req.query; // Get the search query from query parameters

@@ -2,12 +2,12 @@ const nodemailer = require('nodemailer');
 
 // Configure the transporter
 const transporter = nodemailer.createTransport({
-  host: 'mail.gbox.rw', // SMTP Host
-  port: 587, // SMTP Port (commonly 587 for secure connection)
-  secure: false, // true for 465, false for other ports
+  host: 'smtp.hostinger.com', // SMTP Host
+  port: 465, // SMTP Port (commonly 587 for secure connection)
+  secure: true, // true for 465, false for other ports
   auth: {
-    user: 'info@gbox.rw', // SMTP username
-    pass: 'multanlahore@123@' // SMTP password
+    user: 'otpverification@myredd.net', // SMTP username
+    pass: 'otp@Riyadh12' // SMTP password
   },
   tls: {
     rejectUnauthorized: false // Only use this option during development to bypass certain TLS restrictions.
@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendEmail = (to, body, subject) => {
   const mailOptions = {
-    from: 'info@gbox.rw', // sender address must be the same as the authenticated user
+    from: 'otpverification@myredd.net', // sender address must be the same as the authenticated user
     to: to,
     subject: subject,
     text: body
