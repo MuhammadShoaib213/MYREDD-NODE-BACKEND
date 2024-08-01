@@ -26,7 +26,7 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const app = express();
 const server = http.createServer(app);
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 6003;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 app.use(cors({
