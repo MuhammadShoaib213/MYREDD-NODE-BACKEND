@@ -6,7 +6,7 @@ exports.sendEmail = async (req, res) => {
   // Create a transporter object using the custom SMTP transport
   let transporter = nodemailer.createTransport({
     host: 'mail.gbox.rw', // Custom SMTP server
-    port: 587, // Common port for SMTP - adjust if necessary
+    port: 465, // Common port for SMTP - adjust if necessary
     secure: false, // true for 465 (SSL), false for other ports
     auth: {
       user: 'info@gbox.rw', // SMTP username

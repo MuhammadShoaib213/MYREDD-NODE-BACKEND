@@ -86,6 +86,9 @@ const PropertySchema = new mongoose.Schema({
   userId: mongoose.Schema.Types.ObjectId,
   cnicNumber: { type: String, required: true},
   purpose: { type: String, required: false },
+  status: String,
+  priority: String,
+  commission: Number,
   inquiryType: {
     forPurchase: Boolean,
     forSale: Boolean,
@@ -105,7 +108,10 @@ const PropertySchema = new mongoose.Schema({
     office: Boolean,
     shop: Boolean,
     warehouse: Boolean,
-    factory: Boolean
+    factory: Boolean,
+    agricultural: Boolean,
+    commercial: Boolean,
+    residential: Boolean
   },
   city: String,
   area: String,
@@ -118,8 +124,12 @@ const PropertySchema = new mongoose.Schema({
     nearMasjid: Boolean
   },
   bedrooms: Number,
+  length: Number,
+  width: Number,
   budget: Number,
   advancePayment: Number,
+  expected: Number,
+  closingDate: Date, 
   timeForPayment: String,
   images: [String],
   video: String

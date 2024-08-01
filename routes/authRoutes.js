@@ -6,6 +6,7 @@ const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { authenticateToken } = require('../middleware/verifyToken');
+const upload = require('../middleware/upload');
 
 // Define rate limiting rule
 const loginLimiter = rateLimit({
@@ -32,6 +33,15 @@ router.delete('/agents/:id', authenticateToken, authController.deleteAgent);
 
 router.post('/send-otp', authController.sendOtp);
 router.post('/verify-otp', authController.verifyOtp);
+
+
+router.get('/profile/:id', authenticateToken, authController.getProfile);
+
+// Route for updating user profile
+router.patch('/profile/:id', authenticateToken, upload, authController.updateProfile);
+
+
+router.get('/search', authenticateToken, authController.searchUsers);
 
 
 module.exports = router;

@@ -36,7 +36,9 @@ const authenticateToken = (req, res, next) => {
       role: decoded.role,
       firstName: decoded.firstName,
       lastName: decoded.lastName,
-      agencyId: decoded.agencyId 
+      agencyId: decoded.agencyId,
+      country: decoded.country,
+      profilePicture: decoded.profilePicture,
     };
     console.log("User from token:", req.user); // Confirm user data is available
     next();

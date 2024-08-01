@@ -48,7 +48,7 @@ const { sendEmail } = require('../utils/emailService'); // Adjust the path as ne
 
 
 exports.signup = async (req, res) => {
-  const { firstName, lastName, email, password, userRole, cnic, phoneNumber, agencyId } = req.body;
+  const { firstName, lastName, email, password, userRole, cnic, phoneNumber, agencyId, country, city } = req.body;
 
   try {
     const existingUser = await User.findOne({ email });
@@ -65,6 +65,8 @@ exports.signup = async (req, res) => {
       userRole,
       cnic,
       phoneNumber,
+      country,
+      city,
       agencyId: userRole === 'agent' ? agencyId : null
     });
 
@@ -81,7 +83,7 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+country');;
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -93,15 +95,20 @@ exports.login = async (req, res) => {
           role: user.userRole, 
           firstName: user.firstName, 
           lastName: user.lastName,
-          agencyId: user.agencyId 
+          agencyId: user.agencyId, 
+          country: user.country,
+          profilePicture: user.profilePicture, 
       },
       SECRET_KEY,
-      { expiresIn: '1h' }
+      { expiresIn: '12h' }
   );
   
-  
+  console.log('JWT Token:', token);
+
 
     res.status(200).json({ message: 'Login successful', token });
+    console.log('Fetched user data:', user);
+    console.log('JWT Token:', token);
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -223,4 +230,133 @@ exports.verifyOtp = async (req, res) => {
   await user.save();
 
   res.json({ message: 'Email verified successfully!' });
+};
+
+
+exports.getProfile = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findById(userId).lean();  // Use .lean() for performance if you don't need a full Mongoose document
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Default empty values for optional fields
+    const defaultEmptyValue = "---";
+
+    const userProfile = {
+      firstName: user.firstName || defaultEmptyValue,
+      lastName: user.lastName || defaultEmptyValue,
+      email: user.email || defaultEmptyValue,
+      phoneNumber: user.phoneNumber || defaultEmptyValue,
+      whatsappNumber: user.whatsappNumber || defaultEmptyValue,
+      profilePicture: user.profilePicture || "https://via.placeholder.com/150",
+      businessLogo: user.businessLogo || "https://via.placeholder.com/150",
+      country: user.country || defaultEmptyValue,
+      city: user.city || defaultEmptyValue,
+      location: user.location || defaultEmptyValue,
+      businessInfo: user.businessInfo || defaultEmptyValue,
+      businessName: user.businessName || defaultEmptyValue,
+      businessOwnerName: user.businessOwnerName || defaultEmptyValue,
+      businessWorkingArea: user.businessWorkingArea || defaultEmptyValue,
+      businessNTN: user.businessNTN || defaultEmptyValue,
+      residential: user.residential || defaultEmptyValue,
+      commercial: user.commercial || defaultEmptyValue,
+      land: user.land || defaultEmptyValue,
+      experience: user.experience || 0,
+      skills: user.skills || [],
+      dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().substring(0, 10) : defaultEmptyValue, // Format date for easy handling in HTML input
+      age: user.age || defaultEmptyValue,
+      cnic: user.cnic || defaultEmptyValue,
+      userRole: user.userRole,
+      agencyId: user.agencyId,
+      is_verified: user.is_verified
+    };
+
+    res.status(200).json(userProfile);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+
+// // exports.updateProfile = async (req, res) => {
+// //   const userId = req.params.id;
+// //   const updates = req.body;
+
+// //   // Fields that are allowed to be updated
+// //   const allowedUpdates = ['firstName', 'lastName', 'phoneNumber', 'whatsappNumber', 'country', 'city', 'location', 'businessInfo', 'businessLogo', 'businessName', 'businessOwnerName', 'businessWorkingArea', 'businessNTN', 'residential', 'commercial', 'land', 'experience', 'skills', 'dateOfBirth', 'age'];
+// //   const actualUpdates = {};
+
+// //   // Filter out any field that is not allowed to be updated
+// //   Object.keys(updates).forEach(key => {
+// //     if (allowedUpdates.includes(key) && updates[key] != null) { // Ensure the field is allowed and not null
+// //       actualUpdates[key] = updates[key];
+// //     }
+// //   });
+
+// //   try {
+// //     const user = await User.findByIdAndUpdate(userId, actualUpdates, { new: true, runValidators: true });
+// //     if (!user) {
+// //       return res.status(404).json({ message: 'User not found' });
+// //     }
+// //     res.json({ message: 'Profile updated successfully', user });
+// //   } catch (error) {
+// //     console.error('Error updating user profile:', error);
+// //     res.status(500).json({ message: 'Internal server error', error: error.message });
+// //   }
+// // };
+
+exports.updateProfile = async (req, res) => {
+  const userId = req.params.id;
+  const updates = req.body; // This contains the text fields
+
+  // Add image URLs if files were uploaded
+  if (req.files['profilePicture']) {
+    updates.profilePicture = req.files['profilePicture'][0].path;
+  }
+  if (req.files['businessLogo']) {
+    updates.businessLogo = req.files['businessLogo'][0].path;
+  }
+
+  try {
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json({ message: 'Profile updated successfully', user });
+    await user.save();
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+exports.searchUsers = async (req, res) => {
+  const { query } = req.query; // Get the search query from query parameters
+
+  if (!query) {
+      return res.status(400).json({ message: 'Search query is required' });
+  }
+
+  try {
+      const users = await User.find({
+          $or: [
+              { email: { $regex: query, $options: 'i' } },
+              { cnic: { $regex: query, $options: 'i' } },
+              { phoneNumber: { $regex: query, $options: 'i' } }
+          ]
+      }).select('firstName lastName email cnic phoneNumber _id profilePicture ');  // Now including _id in the results
+
+      if (!users.length) {
+          return res.status(404).json({ message: 'No users found matching the criteria' });
+      }
+
+      res.json({ users });
+  } catch (error) {
+      console.error('Error searching users:', error);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 };

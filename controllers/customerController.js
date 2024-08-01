@@ -1,4 +1,4 @@
-const Customer = require('../models/customer');
+const Customer = require('../models/Customer');
 
 // Assuming you have a function for creating a customer
 const createCustomer = async (req, res) => {
@@ -6,6 +6,7 @@ const createCustomer = async (req, res) => {
     // Include profilePicture if the file was uploaded
     const customerData = {
         cnicNumber: req.body.cnicNumber,
+        country: req.body.country,
         cityFrom: req.body.cityFrom,
         currentCity: req.body.currentCity,
         fullName: req.body.fullName,

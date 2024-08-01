@@ -27,7 +27,7 @@
 
 const express = require('express');
 const multer = require('multer');
-const PropertyController = require('../controllers/PropertyController');
+const PropertyController = require('../controllers/propertyController');
 
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
@@ -50,8 +50,11 @@ router.post('/add', upload.fields([
 
 // New route for fetching all properties
 router.get('/all', PropertyController.fetchAllProperties);
+router.get('/property/:id', PropertyController.fetchPropertyById);
+router.get('/propertybyid/:id', PropertyController.fetchPropertyByyId);
+router.get('/user/:userId', PropertyController.fetchUserPropertiesWithInquiryType);
+router.get('/lead/user/:userId', PropertyController.fetchleads);
+router.patch('/updateStatus/:id', PropertyController.updatePropertyStatus);
 
 module.exports = router;
 
-
-module.exports = router;
