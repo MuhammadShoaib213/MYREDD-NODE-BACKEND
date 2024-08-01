@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 465, // SMTP Port (commonly 587 for secure connection)
   secure: false, // true for 465, false for other ports
   auth: {
-    user: 'info@gbox.rw', // SMTP username
-    pass: 'multanlahore@123@' // SMTP password
+    user: '', // SMTP username
+    pass: ' // SMTP password
   },
   tls: {
     rejectUnauthorized: false // Only use this option during development to bypass certain TLS restrictions.
