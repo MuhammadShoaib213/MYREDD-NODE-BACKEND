@@ -2,21 +2,12 @@ const nodemailer = require('nodemailer');
 
 // Configure the transporter
 const transporter = nodemailer.createTransport({
-<<<<<<< HEAD
-  host: '', // SMTP Host
-  port: 465, // SMTP Port (commonly 587 for secure connection)
-  secure: true, // true for 465, false for other ports
-  auth: {
-    user: '', // SMTP username
-    pass: '' // SMTP password
-=======
   host: '', // SMTP Host
   port: 465, // SMTP Port (commonly 587 for secure connection)
   secure: false, // true for 465, false for other ports
   auth: {
-    user: '', // SMTP username
-    pass: ' // SMTP password
->>>>>>> 2fbf7e53e53a86213158b87789fc314d12a558ab
+    user: 'info@gbox.rw', // SMTP username
+    pass: 'multanlahore@123@' // SMTP password
   },
   tls: {
     rejectUnauthorized: false // Only use this option during development to bypass certain TLS restrictions.
