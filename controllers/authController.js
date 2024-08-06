@@ -120,8 +120,8 @@ exports.login = async (req, res) => {
     console.log('JWT Token:', token);
   } catch (error) {
     console.error('Error logging in:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+    res.status(500).json({ message: 'Internal server error', error: error.toString() });
+  }  
 };
 
 exports.getAllAgents = async (req, res) => {
@@ -280,7 +280,8 @@ exports.getProfile = async (req, res) => {
       cnic: user.cnic || defaultEmptyValue,
       userRole: user.userRole,
       agencyId: user.agencyId,
-      is_verified: user.is_verified
+      is_verified: user.is_verified,
+      profileCompletion : user.profileCompletion
     };
 
     res.status(200).json(userProfile);
@@ -343,6 +344,29 @@ exports.getProfile = async (req, res) => {
 //   }
 // };
 
+
+function calculateProfileCompletion(user) {
+  const optionalFields = [
+    'whatsappNumber', 'profilePicture', 'country', 'city', 'location', 
+     'businessName', 'businessOwnerName', 
+    'businessWorkingArea', 'businessNTN', 'residential', 'commercial', 
+    'land', 'experience', 'skills', 'dateOfBirth', 'age'
+  ];
+
+  let filledFields = 0;
+  optionalFields.forEach(field => {
+    if (user[field] && user[field] !== '---' && user[field] !== 'https://via.placeholder.com/150') {
+      filledFields++;
+    }
+  });
+
+  // Calculate percentage of filled fields, only considering the optional fields
+  const completionPercentage = (filledFields / optionalFields.length) * 100;
+  return Math.round(completionPercentage);
+}
+
+
+
 exports.updateProfile = async (req, res) => {
   const userId = req.params.id;
   const updates = req.body; // This contains the text fields
@@ -356,12 +380,18 @@ exports.updateProfile = async (req, res) => {
   }
 
   try {
-    const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
+    const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true }).lean();
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-    res.json({ message: 'Profile updated successfully', user });
-    await user.save();
+
+    // Calculate the profile completion after update
+    const profileCompletion = calculateProfileCompletion(user);
+
+    // Update the profile completion in the database
+    await User.findByIdAndUpdate(userId, { profileCompletion });
+
+    res.json({ message: 'Profile updated successfully', user: {...user, profileCompletion} });
   } catch (error) {
     console.error('Error updating user profile:', error);
 
@@ -375,6 +405,42 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: errorMessage, error: error.message });
   }
 };
+
+
+
+
+// exports.updateProfile = async (req, res) => {
+//   const userId = req.params.id;
+//   const updates = req.body; // This contains the text fields
+
+//   // Add image URLs if files were uploaded
+//   if (req.files['profilePicture']) {
+//     updates.profilePicture = req.files['profilePicture'][0].path;
+//   }
+//   if (req.files['businessLogo']) {
+//     updates.businessLogo = req.files['businessLogo'][0].path;
+//   }
+
+//   try {
+//     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
+//     if (!user) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+//     res.json({ message: 'Profile updated successfully', user });
+//     await user.save();
+//   } catch (error) {
+//     console.error('Error updating user profile:', error);
+
+//     let errorMessage = 'Internal server error';
+//     if (error.name === 'ValidationError') {
+//       errorMessage = 'Validation error: ' + error.message;
+//     } else if (error.name === 'CastError') {
+//       errorMessage = `Invalid value for ${error.path}: ${error.value}`;
+//     }
+
+//     res.status(500).json({ message: errorMessage, error: error.message });
+//   }
+// };
 
 
 exports.searchUsers = async (req, res) => {
@@ -402,4 +468,84 @@ exports.searchUsers = async (req, res) => {
       console.error('Error searching users:', error);
       res.status(500).json({ message: 'Internal server error', error: error.message });
   }
+};
+
+
+
+
+// Function to generate OTP for password reset and send email
+exports.forgotPassword = async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  
+  if (!user) {
+    console.log(`Forgot Password: No user found with email ${email}`);
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const passOtp = Math.floor(100000 + Math.random() * 900000);  // 6 digits OTP
+  const passOtpExpiration = new Date(Date.now() + 20 * 60 * 1000);  // OTP valid for 20 minutes
+
+  user.passOtp = passOtp;
+  user.passOtpExpiration = passOtpExpiration;
+  await user.save();
+
+  console.log(`OTP ${passOtp} sent to ${email} expires at ${passOtpExpiration}`);
+  sendEmail(email, `Your OTP for password reset is: ${passOtp}`, 'Reset Your Password');
+
+  res.json({ message: 'OTP sent to your email. Please check your inbox.' });
+};
+
+
+
+
+exports.verifyOtpPass = async (req, res) => {
+  const { email, passOtp } = req.body;
+  console.log("Received OTP verification request with data:", req.body);
+
+  const user = await User.findOne({ email }).exec();
+
+  if (!user) {
+    console.log(`Verify OTP: No user found with email ${email}`);
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  if (new Date(user.passOtpExpiration) <= new Date()) {
+    console.log(`Verify OTP: OTP for ${email} has expired.`);
+    return res.status(400).json({ message: 'OTP has expired' });
+  }
+
+  if (user.passOtp !== passOtp) {
+    console.log(`Verify OTP: OTP mismatch for ${email}, expected ${user.passOtp}, received ${passOtp}`);
+    return res.status(400).json({ message: 'Invalid OTP' });
+  }
+
+  user.passOtp = null;  // Clear the OTP as it's no longer needed
+  user.passOtpExpiration = null;
+  await user.save();
+
+  console.log(`OTP verified successfully for ${email}`);
+  res.json({ message: 'OTP verified successfully. Please proceed to reset your password.' });
+};
+
+
+
+
+// Function to reset password
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  console.log("Received OTP verification request with data:", req.body);
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    console.log(`Reset Password: No user found with email ${email}`);
+    return res.status(404).json({ message: 'User not found' });
+  }
+
+  const hashedPassword = await bcrypt.hash(newPassword, 12);
+  user.password = hashedPassword;
+  await user.save();
+
+  console.log(`Password has been reset successfully for ${email}`);
+  res.json({ message: 'Password has been reset successfully. You can now log in with the new password.' });
 };

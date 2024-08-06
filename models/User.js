@@ -12,6 +12,8 @@ const userSchema = new mongoose.Schema({
   whatsappNumber: { type: String }, // New field for WhatsApp number
   otp: { type: String },
   otp_expiration: { type: Date },
+  passOtp: { type: String },
+  passOtpExpiration: { type: Date },
   is_verified: { type: Boolean, default: false },
   // New fields as specified
   profilePicture: { type: String },
@@ -31,7 +33,7 @@ const userSchema = new mongoose.Schema({
   skills: { type: [String] }, // Array of skills
   dateOfBirth: { type: Date },
   age: { type: Number },
-  profileCompletion: { type: Number, default: 0 },
+  profileCompletion: { type: Number, default: 30 },
 });
 
 

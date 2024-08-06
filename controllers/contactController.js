@@ -1,26 +1,64 @@
+// const nodemailer = require('nodemailer');
+
+// exports.sendEmail = async (req, res) => {
+//   let { email, subject, message } = req.body;
+
+//   // Create a transporter object using the custom SMTP transport
+//   let transporter = nodemailer.createTransport({
+//     host: 'smtp.hostinger.com', // Custom SMTP server
+//     port: 465, // Common port for SMTP - adjust if necessary
+//     secure: true, // true for 465 (SSL), false for other ports
+//     auth: {
+//       user: 'contactform@myredd.net', // SMTP username
+//       pass: 'Con@Riyadh12' // SMTP password
+//     }
+//   });
+
+//   // Setup email data
+//   let mailOptions = {
+//     from: '"My REDD Web App" <test@MYREDD.NET>', // Update sender address
+//     to: email, // List of receivers
+//     subject: subject, // Subject line
+//     text: message, // Plain text body
+//     html: `<b>${message}</b>` // HTML body content
+//   };
+
+//   // Send mail with defined transport object
+//   try {
+//     let info = await transporter.sendMail(mailOptions);
+//     console.log('Message sent: %s', info.messageId);
+//     return res.status(200).send('Message sent successfully!');
+//   } catch (error) {
+//     console.error('Error sending email: ', error);
+//     return res.status(500).send('Failed to send message.');
+//   }
+
+// };
+
+
 const nodemailer = require('nodemailer');
 
 exports.sendEmail = async (req, res) => {
-  let { email, subject, message } = req.body;
+  let { senderEmail, subject, message } = req.body;
 
   // Create a transporter object using the custom SMTP transport
   let transporter = nodemailer.createTransport({
-    host: 'mail.gbox.rw', // Custom SMTP server
+    host: 'smtp.hostinger.com', // Custom SMTP server
     port: 465, // Common port for SMTP - adjust if necessary
-    secure: false, // true for 465 (SSL), false for other ports
+    secure: true, // true for 465 (SSL), false for other ports
     auth: {
-      user: 'info@gbox.rw', // SMTP username
-      pass: 'multanlahore@123@' // SMTP password
+      user: 'contactform@myredd.net', // SMTP username
+      pass: 'Con@Riyadh12' // SMTP password
     }
   });
 
   // Setup email data
   let mailOptions = {
-    from: '"My REDD Web App" <test@MYREDD.NET>', // Update sender address
-    to: email, // List of receivers
+    from: '"My REDD Web App" <contactform@myredd.net>', // Fixed sender address
+    to: 'contactform@myredd.net', // Replace with your email address to receive the messages
     subject: subject, // Subject line
-    text: message, // Plain text body
-    html: `<b>${message}</b>` // HTML body content
+    text: `Message from: ${senderEmail}\n\n${message}`, // Include user's email in the message content
+    html: `<p><b>Message from:</b> ${senderEmail}</p><p>${message}</p>` // Include user's email in the HTML content
   };
 
   // Send mail with defined transport object
@@ -32,5 +70,4 @@ exports.sendEmail = async (req, res) => {
     console.error('Error sending email: ', error);
     return res.status(500).send('Failed to send message.');
   }
-
 };

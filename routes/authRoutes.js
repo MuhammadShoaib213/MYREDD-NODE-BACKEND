@@ -44,4 +44,16 @@ router.patch('/profile/:id', authenticateToken, upload, authController.updatePro
 router.get('/search', authenticateToken, authController.searchUsers);
 
 
+// Route to initiate password reset process
+router.post('/forgot-password', authController.forgotPassword);
+
+// Route to verify OTP
+router.post('/verify-otp-pass', authController.verifyOtpPass);
+
+// Route for resetting password
+router.post('/reset-password', authController.resetPassword);
+
+
+
+
 module.exports = router;

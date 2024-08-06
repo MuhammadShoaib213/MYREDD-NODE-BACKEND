@@ -64,6 +64,39 @@ app.use('/api/friend', friendsRoutes);
 app.use('/api', noteRoutes);
 app.use('/api/schedules', scheduleRoutes);
 
+const fetchAllNeighborhoods = async (url, allResults = []) => {
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    allResults = allResults.concat(data.results);
+
+    if (data.next_page_token) {
+      // Wait for a few seconds before making the next call to ensure the token is valid
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return fetchAllNeighborhoods(`${url}&pagetoken=${data.next_page_token}`, allResults);
+    }
+
+    return allResults;
+  } catch (error) {
+    console.error('Error during fetching neighborhoods:', error);
+    throw new Error('Failed to fetch neighborhoods');
+  }
+};
+
+app.get('/api/neighborhoods', async (req, res) => {
+  const { latitude, longitude } = req.query;
+  const apiKey = 'AIzaSyDVOjCkNrveTmwwBP5qbqkGAfarfSPAZbQ'; // Replace with the secure way to store API keys
+  const baseurl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=25000&type=neighborhood&key=${apiKey}`;
+
+  try {
+    const neighborhoods = await fetchAllNeighborhoods(baseurl);
+    res.json({ results: neighborhoods });
+  } catch (error) {
+    console.error('API Error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Connect to MongoDB
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => {
