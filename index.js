@@ -9,6 +9,7 @@ const path = require('path');
 const axios = require('axios');
 require('dotenv').config();
 
+
 // Route imports
 const authRoutes = require('./routes/authRoutes');
 const customerRoutes = require('./routes/customers');
@@ -64,36 +65,28 @@ app.use('/api/friend', friendsRoutes);
 app.use('/api', noteRoutes);
 app.use('/api/schedules', scheduleRoutes);
 
-const fetchAllNeighborhoods = async (url, allResults = []) => {
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
-    allResults = allResults.concat(data.results);
-
-    if (data.next_page_token) {
-      // Wait for a few seconds before making the next call to ensure the token is valid
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      return fetchAllNeighborhoods(`${url}&pagetoken=${data.next_page_token}`, allResults);
-    }
-
-    return allResults;
-  } catch (error) {
-    console.error('Error during fetching neighborhoods:', error);
-    throw new Error('Failed to fetch neighborhoods');
-  }
-};
-
 app.get('/api/neighborhoods', async (req, res) => {
   const { latitude, longitude } = req.query;
-  const apiKey = 'AIzaSyDVOjCkNrveTmwwBP5qbqkGAfarfSPAZbQ'; // Replace with the secure way to store API keys
-  const baseurl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=25000&type=neighborhood&key=${apiKey}`;
+  const apiKey = 'AIzaSyDVOjCkNrveTmwwBP5qbqkGAfarfSPAZbQ'; // Store your API key securely
+
+  console.log('Received request to /api/neighborhoods');
+  console.log(`Query parameters - Latitude: ${latitude}, Longitude: ${longitude}`);
+
+  const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=25000&type=neighborhood&key=${apiKey}`;
+  console.log(`Constructed URL: ${url}`);
 
   try {
-    const neighborhoods = await fetchAllNeighborhoods(baseurl);
-    res.json({ results: neighborhoods });
+    console.log('Fetching data from Google Maps API...');
+    const response = await fetch(url);
+    console.log('Response received from API');
+    const data = await response.json();
+    console.log('Data successfully parsed from API response');
+
+    res.json(data);
+    console.log('Response sent to client');
   } catch (error) {
-    console.error('API Error:', error);
-    res.status(500).json({ error: error.message });
+    console.error('Error fetching neighborhoods:', error);
+    res.status(500).json({ error: 'Failed to fetch neighborhoods' });
   }
 });
 
