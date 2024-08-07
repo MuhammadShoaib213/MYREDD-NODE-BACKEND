@@ -77,15 +77,16 @@ app.get('/api/neighborhoods', async (req, res) => {
 
   try {
     console.log('Fetching data from Google Maps API...');
-    const response = await fetch(url);
+    const response = await axios.get(url);
     console.log('Response received from API');
-    const data = await response.json();
+    const data = response.data;
     console.log('Data successfully parsed from API response');
 
     res.json(data);
     console.log('Response sent to client');
   } catch (error) {
-    console.error('Error fetching neighborhoods:', error);
+    console.error('Error fetching neighborhoods:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to fetch neighborhoods' });
   }
 });
@@ -133,16 +134,16 @@ mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true 
     console.error('Error connecting to MongoDB Atlas:', error);
   });
 
-// Axios interceptor to add token to request headers
-axios.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, error => {
-  return Promise.reject(error);
-});
+// // Axios interceptor to add token to request headers
+// axios.interceptors.request.use(config => {
+//   const token = localStorage.getItem('token');
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//   }
+//   return config;
+// }, error => {
+//   return Promise.reject(error);
+// });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
