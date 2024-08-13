@@ -39,24 +39,58 @@ router.get('/', async (req, res) => {
 });
 
 
-  router.post('/add', upload.single('image'), async (req, res) => {
+//   router.post('/add', upload.single('image'), async (req, res) => {
+//   try {
+//     if (!req.file) {
+//       throw new Error('No file uploaded');
+//     }
+    
+//     const newCustomer = new Customer({
+//       ...req.body,
+//       profilePicture: req.file.path
+//     });
+
+//     await newCustomer.save();
+//     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
+//   } catch (error) {
+//     console.error('Error adding customer:', error);
+//     res.status(500).json({ message: 'Failed to add customer', error: error.message });
+//   }
+// });
+router.post('/add', upload.single('image'), async (req, res) => {
   try {
+    console.log('Request received to add customer:', req.body);
+
     if (!req.file) {
+      console.error('Error: No file uploaded');
       throw new Error('No file uploaded');
     }
-    
+
+    console.log('File uploaded successfully:', req.file);
+
     const newCustomer = new Customer({
       ...req.body,
       profilePicture: req.file.path
     });
 
+    console.log('New customer object created:', newCustomer);
+
     await newCustomer.save();
+    console.log('Customer saved successfully to the database');
+
     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
   } catch (error) {
-    console.error('Error adding customer:', error);
+    console.error('Error adding customer:', {
+      message: error.message,
+      stack: error.stack,
+      requestData: req.body,
+      fileData: req.file,
+    });
+
     res.status(500).json({ message: 'Failed to add customer', error: error.message });
   }
 });
+
 
 // // router.get('/check', async (req, res) => {
 // //   try {
@@ -151,10 +185,10 @@ router.get('/check', async (req, res) => {
   }
 
   // Validate CNIC format
-  if (cnicNumber && !/^\d{16}$/.test(cnicNumber)) {
-    console.log('Validation error: Incorrect CNIC format', cnicNumber);
-    return res.status(400).json({ message: "Invalid CNIC format. CNIC must be a 16-digit number." });
-  }
+  // if (cnicNumber && !/^\d{16}$/.test(cnicNumber)) {
+  //   console.log('Validation error: Incorrect CNIC format', cnicNumber);
+  //   return res.status(400).json({ message: "Invalid CNIC format. CNIC must be a 16-digit number." });
+  // }
 
   // Validate phone number format
   if (phoneNumber && !/^\+?\d{10,}$/.test(phoneNumber)) {

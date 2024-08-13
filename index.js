@@ -23,6 +23,7 @@ const friendshipRoutes = require('./routes/friendshipRoutes');
 const friendsRoutes = require('./routes/friendsRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
+const sharedLeadRoutes = require('./routes/sharedLeadRoutes');
 
 const app = express();
 const server = http.createServer(app);
@@ -64,6 +65,7 @@ app.use('/api/friends', friendshipRoutes);
 app.use('/api/friend', friendsRoutes);
 app.use('/api', noteRoutes);
 app.use('/api/schedules', scheduleRoutes);
+app.use('/api/shared-leads', sharedLeadRoutes);
 
 app.get('/api/neighborhoods', async (req, res) => {
   const { latitude, longitude } = req.query;
