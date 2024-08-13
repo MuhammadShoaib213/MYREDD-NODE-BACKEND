@@ -43,12 +43,12 @@ exports.sendEmail = async (req, res) => {
 
   // Create a transporter object using the custom SMTP transport
   let transporter = nodemailer.createTransport({
-    host: 'smtp.hostinger.com', // Custom SMTP server
+    host: '', // Custom SMTP server
     port: 465, // Common port for SMTP - adjust if necessary
     secure: true, // true for 465 (SSL), false for other ports
     auth: {
-      user: 'contactform@myredd.net', // SMTP username
-      pass: 'Con@Riyadh12' // SMTP password
+      user: '', // SMTP username
+      pass: '' // SMTP password
     }
   });
 
