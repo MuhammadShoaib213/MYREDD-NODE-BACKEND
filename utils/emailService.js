@@ -6,8 +6,8 @@ const transporter = nodemailer.createTransport({
   port: 465, // SMTP Port (commonly 587 for secure connection)
   secure: true, // true for 465, false for other ports
   auth: {
-    user: 'otpverification@myredd.net', // SMTP username
-    pass: 'otp@Riyadh12' , // SMTP password
+    user: '', // SMTP username
+    pass: '' , // SMTP password
   },
   tls: {
     rejectUnauthorized: false // Only use this option during development to bypass certain TLS restrictions.
