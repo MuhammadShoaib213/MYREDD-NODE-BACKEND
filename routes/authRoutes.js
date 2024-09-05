@@ -53,7 +53,7 @@ router.post('/verify-otp-pass', authController.verifyOtpPass);
 // Route for resetting password
 router.post('/reset-password', authController.resetPassword);
 
-
+router.post('/invite', authController.invite);
 
 
 module.exports = router;

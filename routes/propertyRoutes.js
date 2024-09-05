@@ -52,9 +52,11 @@ router.post('/add', upload.fields([
 router.get('/all', PropertyController.fetchAllProperties);
 router.get('/property/:id', PropertyController.fetchPropertyById);
 router.get('/propertybyid/:id', PropertyController.fetchPropertyByyId);
+router.get('/propertyAd/:id', PropertyController.fetchPropertyAd);
 router.get('/user/:userId', PropertyController.fetchUserPropertiesWithInquiryType);
 router.get('/lead/user/:userId', PropertyController.fetchleads);
 router.patch('/updateStatus/:id', PropertyController.updatePropertyStatus);
+router.get('/findMatches/:propertyId', PropertyController.findMatches);
 
 module.exports = router;
 

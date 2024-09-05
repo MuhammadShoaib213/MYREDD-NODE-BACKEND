@@ -549,3 +549,32 @@ exports.resetPassword = async (req, res) => {
   console.log(`Password has been reset successfully for ${email}`);
   res.json({ message: 'Password has been reset successfully. You can now log in with the new password.' });
 };
+
+
+
+// Function to invite a new user by email
+exports.invite = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // Check if the user already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(409).json({ message: 'Email is already registered.' });  // 409 Conflict
+    }
+
+    // Generate an invite link or message
+    const inviteLink = `https://yourwebsite.com/signup?invite=${encodeURIComponent(email)}`;
+    const emailSubject = 'You are invited to join our platform!';
+    const emailBody = `Hello,\n\nYou have been invited to register at our platform. Please click the following link to sign up: ${inviteLink}\n\nBest regards,\nYour Team`;
+
+    // Send the invite email
+    sendEmail(email, emailBody, emailSubject);
+
+    // Respond with success message
+    res.status(200).json({ message: 'Invitation sent successfully to ' + email });
+  } catch (error) {
+    console.error('Invite Error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};

@@ -3,7 +3,89 @@ const Customer = require('../models/Customer');
 
 
 // Example modification to include JSON parsing
+// exports.addProperty = async (req, res) => {
+//   try {
+//     // Parse JSON fields if they exist and are strings
+//     const parseJSON = (data) => {
+//       try {
+//         return JSON.parse(data);
+//       } catch (e) {
+//         return data; // return as is if parsing fails
+//       }
+//     };
+
+//     const {
+//       userId,
+//       cnicNumber,
+//       purpose,
+//       inquiryType,
+//       propertyType,
+//       propertySubType,
+//       city,
+//       area,
+//       phaseBlock,
+//       category,
+//       features,
+//       bedrooms,
+//       budget,
+//       advancePayment,
+//       timeForPayment,
+//       status,
+//       expected,
+//       length,
+//       width,
+//       closingDate,
+//       priority,
+//       commission
+//     } = req.body;
+
+//     const parsedInquiryType = parseJSON(inquiryType);
+//     const parsedPropertyType = parseJSON(propertyType);
+//     const parsedPropertySubType = parseJSON(propertySubType);
+//     const parsedFeatures = parseJSON(features);
+
+//     // Handle file uploads
+//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
+//     const video = req.files['video'] ? req.files['video'][0].path : '';
+
+//     const newProperty = new Property({
+//       userId,
+//       cnicNumber,
+//       purpose,
+//       inquiryType: parsedInquiryType,
+//       propertyType: parsedPropertyType,
+//       propertySubType: parsedPropertySubType,
+//       city,
+//       area,
+//       phaseBlock,
+//       category,
+//       features: parsedFeatures,
+//       bedrooms,
+//       budget,
+//       advancePayment,
+//       timeForPayment,
+//       images,
+//       video,
+//       status,
+//       expected,
+//       length,
+//       width,
+//       closingDate,
+//       priority,
+//       commission
+//     });
+
+//     await newProperty.save();
+//     res.status(201).json({ message: "Inquiry submitted successfully", property: newProperty });
+//   } catch (error) {
+//     console.error('Error adding property:', error);
+//     res.status(500).json({ message: "Failed to add property", error: error.message });
+//   }
+// };
+
 exports.addProperty = async (req, res) => {
+  console.log('Uploaded files:', req.files);
+
   try {
     // Parse JSON fields if they exist and are strings
     const parseJSON = (data) => {
@@ -76,7 +158,10 @@ exports.addProperty = async (req, res) => {
     });
 
     await newProperty.save();
-    res.status(201).json({ message: "Inquiry submitted successfully", property: newProperty });
+    res.status(201).json({ 
+      message: "Inquiry submitted successfully", 
+      propertyId: newProperty._id  // Returning the property ID
+    });
   } catch (error) {
     console.error('Error adding property:', error);
     res.status(500).json({ message: "Failed to add property", error: error.message });
@@ -113,6 +198,22 @@ exports.fetchAllProperties = async (req, res) => {
 
 // Fetch a single property by ID
 exports.fetchPropertyById = async (req, res) => {
+  try {
+      const propertyId = req.params.id;  // Get property ID from URL params
+      const property = await Property.findById(propertyId);
+      
+      if (!property) {
+          return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.status(200).json(property);
+  } catch (error) {
+      console.error('Failed to fetch property:', error);
+      res.status(500).json({ message: "Failed to fetch property", error: error.message });
+  }
+};
+
+exports.fetchPropertyAd = async (req, res) => {
   try {
       const propertyId = req.params.id;  // Get property ID from URL params
       const property = await Property.findById(propertyId);
@@ -351,5 +452,49 @@ exports.updatePropertyStatus = async (req, res) => {
   } catch (error) {
       console.error('Error updating property status:', error);
       res.status(500).json({ message: "Failed to update property status", error: error.message });
+  }
+};
+
+
+// Helper function to determine the opposite inquiry type
+function getOppositeInquiryType(inquiryType) {
+  const mappings = {
+    forSale: 'forPurchase',
+    forPurchase: 'forSale',
+    forRent: 'onRent',
+    onRent: 'forRent'
+  };
+
+  return mappings[inquiryType] || null;
+}
+
+// Function to find matches for a property
+exports.findMatches = async (req, res) => {
+  try {
+    const { propertyId } = req.params;
+    const property = await Property.findById(propertyId);
+    
+    if (!property) {
+      return res.status(404).json({ message: "Property not found" });
+    }
+
+    const oppositeInquiryType = getOppositeInquiryType(property.inquiryType);
+    
+    if (!oppositeInquiryType) {
+      return res.status(400).json({ message: "Invalid inquiry type for matching" });
+    }
+    
+    const matches = await Property.find({ 
+      inquiryType: oppositeInquiryType,
+      propertyType: property.propertyType,
+      propertySubType: property.propertySubType,
+      area: property.area,
+      city: property.city
+    });
+
+    res.status(200).json(matches);
+  } catch (error) {
+    console.error('Failed to find matches:', error);
+    res.status(500).json({ message: "Failed to process request", error: error.message });
   }
 };
