@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
   userId: mongoose.Schema.Types.ObjectId,
-  country: { type: String, required: true }, 
+  customerId: { type: String, required: true, unique: true },
+  currentCountry: { type: String, required: true }, 
+  permanentCountry: { type: String, required: true }, 
   cnicNumber: { type: String, required: true, unique: true },
   cityFrom: { type: String, required: true }, // This should match "customerCity" if that's what the form uses
   currentCity: { type: String, required: true }, // Confirm this matches the form field name

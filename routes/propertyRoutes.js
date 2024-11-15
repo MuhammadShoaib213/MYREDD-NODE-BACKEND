@@ -57,6 +57,7 @@ router.get('/user/:userId', PropertyController.fetchUserPropertiesWithInquiryTyp
 router.get('/lead/user/:userId', PropertyController.fetchleads);
 router.patch('/updateStatus/:id', PropertyController.updatePropertyStatus);
 router.get('/findMatches/:propertyId', PropertyController.findMatches);
+router.put('/:id', upload.fields([{ name: 'images', maxCount: 10 }, { name: 'video', maxCount: 1 }]), PropertyController.updateProperty);
 
 module.exports = router;
 

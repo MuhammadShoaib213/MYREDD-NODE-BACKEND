@@ -85,6 +85,8 @@ const mongoose = require('mongoose');
 const PropertySchema = new mongoose.Schema({
   userId: mongoose.Schema.Types.ObjectId,
   cnicNumber: { type: String, required: true},
+  propertyNumber: { type: Number, unique: true },
+  propertyCode: { type: String, unique: true },
   purpose: { type: String, required: false },
   status: String,
   priority: String,

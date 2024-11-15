@@ -1,5 +1,6 @@
 const Customer = require('../models/Customer');
 const multer = require('multer');
+const InviteToken = require('../models/InviteToken');
 
 // Set up multer for file storage
 const storage = multer.diskStorage({
@@ -36,15 +37,158 @@ exports.getCustomers = async (req, res) => {
 };
 
 
+// exports.addCustomer = async (req, res) => {
+//   console.log('Received request:', req.body);
+//   console.log('File details:', req.file);
+
+//   const { userId, cnicNumber } = req.body;
+
+//   try {
+//     // Check if this user has already added this CNIC
+//     const existingCustomer = await Customer.findOne({ userId, cnicNumber });
+//     if (existingCustomer) {
+//       return res.status(400).json({
+//         message: 'You have already added a customer with this CNIC.'
+//       });
+//     }
+
+//     if (!req.file) {
+//       console.error('No file uploaded error');
+//       throw new Error('No file uploaded');
+//     }
+
+//     console.log(`File uploaded at path: ${req.file.path}`);
+//     const newCustomer = new Customer({
+//       ...req.body,
+//       profilePicture: req.file.path
+//     });
+
+//     const lastCustomer = await Customer.findOne().sort({ customerId: -1 }).exec();
+
+//     let newCustomerId = '0001'; // Default starting customerId
+//     if (lastCustomer) {
+//       // Parse the last customerId to a number, increment it, and format it with leading zeros
+//       const lastIdNumber = parseInt(lastCustomer.customerId, 10);
+//       const nextIdNumber = lastIdNumber + 1;
+//       newCustomerId = nextIdNumber.toString().padStart(4, '0'); // Adjust pad length as needed
+//     }
+
+//     // Assign the new customerId
+//     customerData.customerId = newCustomerId;
+
+
+//     await newCustomer.save();
+//     console.log('Customer saved successfully:', newCustomer);
+//     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
+//   } catch (error) {
+//     console.error('Error adding customer:', error);
+//     if (error.code === 11000) {
+//       // This error is thrown if the unique index constraint is violated
+//       res.status(400).json({ message: 'This customer has already been added by you.' });
+//     } else {
+//       res.status(500).json({ message: `Failed to add customer due to server error: ${error.message}` });
+//     }
+//   }
+// };
+
+
+// exports.addCustomer = async (req, res) => {
+//   console.log('Received request:', req.body);
+//   console.log('File details:', req.file);
+
+//   const { userId, cnicNumber } = req.body;
+
+//   try {
+//     // Check if this user has already added this CNIC
+//     const existingCustomer = await Customer.findOne({ userId, cnicNumber });
+//     if (existingCustomer) {
+//       return res.status(400).json({
+//         message: 'You have already added a customer with this CNIC.'
+//       });
+//     }
+
+//     if (!req.file) {
+//       console.error('No file uploaded error');
+//       throw new Error('No file uploaded');
+//     }
+
+//     console.log(`File uploaded at path: ${req.file.path}`);
+
+//     // Create the new customer object
+//     const newCustomer = new Customer({
+//       ...req.body,
+//       profilePicture: req.file.path
+//     });
+
+//     // Find the customer with the highest customerId
+//     const lastCustomer = await Customer.findOne().sort({ customerId: -1 }).exec();
+//     console.log('Last customer:', lastCustomer);
+
+//     let newCustomerId = '0001'; // Default starting customerId
+//     if (lastCustomer && lastCustomer.customerId) {
+//       // Extract numeric part of customerId
+//       const customerIdStr = lastCustomer.customerId.match(/\d+/g)?.join('');
+//       console.log('Extracted numeric customerId:', customerIdStr);
+
+//       if (customerIdStr) {
+//         const lastIdNumber = parseInt(customerIdStr, 10);
+//         if (!isNaN(lastIdNumber)) {
+//           const nextIdNumber = lastIdNumber + 1;
+//           newCustomerId = nextIdNumber.toString().padStart(4, '0');
+//         } else {
+//           console.warn('Parsed lastIdNumber is NaN, defaulting newCustomerId to "0001"');
+//           newCustomerId = '0001';
+//         }
+//       } else {
+//         console.warn('Could not extract numeric customerId, defaulting to "0001"');
+//         newCustomerId = '0001';
+//       }
+//     } else {
+//       console.log('No previous customer found, starting customerId at "0001"');
+//     }
+
+//     // Assign the new customerId to the newCustomer object
+//     newCustomer.customerId = newCustomerId;
+
+//     // Save the new customer
+//     await newCustomer.save();
+//     console.log('Customer saved successfully:', newCustomer);
+//     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
+//   } catch (error) {
+//     console.error('Error adding customer:', error);
+//     if (error.code === 11000) {
+//       // This error is thrown if the unique index constraint is violated
+//       res.status(400).json({ message: 'This customer has already been added by you.' });
+//     } else {
+//       res.status(500).json({ message: `Failed to add customer due to server error: ${error.message}` });
+//     }
+//   }
+// };
+
 exports.addCustomer = async (req, res) => {
   console.log('Received request:', req.body);
   console.log('File details:', req.file);
 
-  const { userId, cnicNumber } = req.body;
+  const { userId, cnicNumber, inviteToken } = req.body;
+  let actualUserId = userId;
 
   try {
+    // If userId is not provided and inviteToken is provided, find the inviter's userId
+    if (!userId && inviteToken) {
+      const invite = await InviteToken.findOne({ token: inviteToken });
+      if (invite) {
+        actualUserId = invite.inviter.toString(); // Assign inviter's userId
+      } else {
+        return res.status(400).json({ message: 'Invalid invite token' });
+      }
+    }
+
+    if (!actualUserId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
     // Check if this user has already added this CNIC
-    const existingCustomer = await Customer.findOne({ userId, cnicNumber });
+    const existingCustomer = await Customer.findOne({ userId: actualUserId, cnicNumber });
     if (existingCustomer) {
       return res.status(400).json({
         message: 'You have already added a customer with this CNIC.'
@@ -57,13 +201,48 @@ exports.addCustomer = async (req, res) => {
     }
 
     console.log(`File uploaded at path: ${req.file.path}`);
+
+    // Create the new customer object
     const newCustomer = new Customer({
       ...req.body,
+      userId: actualUserId, // Assign the actual user ID (either from token or invite)
       profilePicture: req.file.path
     });
 
+    // Find the customer with the highest customerId
+    const lastCustomer = await Customer.findOne().sort({ customerId: -1 }).exec();
+    console.log('Last customer:', lastCustomer);
+
+    let newCustomerId = '0001'; // Default starting customerId
+    if (lastCustomer && lastCustomer.customerId) {
+      // Extract numeric part of customerId
+      const customerIdStr = lastCustomer.customerId.match(/\d+/g)?.join('');
+      console.log('Extracted numeric customerId:', customerIdStr);
+
+      if (customerIdStr) {
+        const lastIdNumber = parseInt(customerIdStr, 10);
+        if (!isNaN(lastIdNumber)) {
+          const nextIdNumber = lastIdNumber + 1;
+          newCustomerId = nextIdNumber.toString().padStart(4, '0');
+        } else {
+          console.warn('Parsed lastIdNumber is NaN, defaulting newCustomerId to "0001"');
+          newCustomerId = '0001';
+        }
+      } else {
+        console.warn('Could not extract numeric customerId, defaulting to "0001"');
+        newCustomerId = '0001';
+      }
+    } else {
+      console.log('No previous customer found, starting customerId at "0001"');
+    }
+
+    // Assign the new customerId to the newCustomer object
+    newCustomer.customerId = newCustomerId;
+
+    // Save the new customer
     await newCustomer.save();
     console.log('Customer saved successfully:', newCustomer);
+
     res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
   } catch (error) {
     console.error('Error adding customer:', error);
@@ -75,8 +254,6 @@ exports.addCustomer = async (req, res) => {
     }
   }
 };
-
-
 
 
 // Controller to check customer details

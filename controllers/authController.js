@@ -4,6 +4,11 @@ const SECRET_KEY = 'SECRET_KEY';
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/emailService'); // Adjust the path as necessary
+const twilio = require('twilio');
+const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
+const Invitation = require('../models/Invitation');
+
 
 
 
@@ -74,6 +79,33 @@ exports.signup = async (req, res) => {
       city,
       agencyId: userRole === 'agent' ? agencyId : null
     });
+
+
+
+    let invitation;
+
+    if (email) {
+      invitation = await Invitation.findOne({ inviteeEmail: email, status: 'pending' });
+    } else if (phoneNumber) {
+      // Ensure phoneNumber is formatted consistently
+      const phoneNumberObj = parsePhoneNumberFromString(phoneNumber);
+      const formattedNumber = phoneNumberObj.number;
+      invitation = await Invitation.findOne({ inviteePhone: formattedNumber, status: 'pending' });
+    }
+
+    if (invitation) {
+      // Update the invitation status
+      invitation.status = 'accepted';
+      invitation.acceptedAt = new Date();
+      await invitation.save();
+
+      // Notify the inviter
+      const inviter = await User.findById(invitation.inviter);
+      if (inviter) {
+        // Send notification (we'll implement this in the next step)
+        notifyInviter(inviter, user); // user is the newly registered user
+      }
+    }
 
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
@@ -552,24 +584,116 @@ exports.resetPassword = async (req, res) => {
 
 
 
+// // Function to invite a new user by email
+// exports.invite = async (req, res) => {
+//   const { email } = req.body;
+
+//   try {
+//     // Check if the user already exists
+//     const userExists = await User.findOne({ email });
+//     if (userExists) {
+//       return res.status(409).json({ message: 'Email is already registered.' });  // 409 Conflict
+//     }
+
+//     // Generate an invite link or message
+//     const inviteLink = `https://yourwebsite.com/signup?invite=${encodeURIComponent(email)}`;
+//     const emailSubject = 'You are invited to join our platform!';
+//     const emailBody = `Hello,\n\nYou have been invited to register at our platform. Please click the following link to sign up: ${inviteLink}\n\nBest regards,\nYour Team`;
+
+//     // Send the invite email
+//     sendEmail(email, emailBody, emailSubject);
+
+//     // Respond with success message
+//     res.status(200).json({ message: 'Invitation sent successfully to ' + email });
+//   } catch (error) {
+//     console.error('Invite Error:', error);
+//     res.status(500).json({ message: 'Internal server error', error: error.message });
+//   }
+// };
+
+
+// Function to invite a new user by SMS
+exports.inviteBySMS = async (req, res) => {
+  const { phoneNumber } = req.body;
+  const inviterId = req.user.id; // Assuming you have the inviter's ID from authentication middleware
+
+  try {
+    // Validate the phone number
+    if (!phoneNumber) {
+      return res.status(400).json({ message: 'Phone number is required.' });
+    }
+
+    // Use parsePhoneNumberFromString instead of parsePhoneNumber
+    const phoneNumberObj = parsePhoneNumberFromString(phoneNumber);
+
+    if (!phoneNumberObj || !phoneNumberObj.isValid()) {
+      return res.status(400).json({ message: 'Invalid phone number format.' });
+    }
+
+    const formattedNumber = phoneNumberObj.number; // E.164 format
+
+    // Check if the user already exists
+    const userExists = await User.findOne({ phoneNumber: formattedNumber });
+    if (userExists) {
+      return res.status(409).json({ message: 'Phone number is already registered.' });
+    }
+
+    // Generate an invite link
+    const inviteLink = `https://myredd.net/signup?invite=${encodeURIComponent(formattedNumber)}`;
+    const smsBody = `You're invited to join our platform! Sign up here: ${inviteLink}`;
+
+    // Send the SMS invite using Twilio
+    await client.messages.create({
+      body: smsBody,
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: formattedNumber,
+    });
+
+        // Create an Invitation record
+        const invitation = new Invitation({
+          inviter: inviterId,
+          inviteePhone: formattedNumber,
+          inviteMethod: 'sms',
+        });
+        await invitation.save();
+
+    // Respond with a success message
+    res.status(200).json({ message: `Invitation sent successfully to ${formattedNumber}` });
+  } catch (error) {
+    console.error('SMS Invite Error:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+
 // Function to invite a new user by email
 exports.invite = async (req, res) => {
   const { email } = req.body;
+  const inviterId = req.user.id; // Assuming you have the inviter's ID from authentication middleware
 
   try {
     // Check if the user already exists
     const userExists = await User.findOne({ email });
     if (userExists) {
-      return res.status(409).json({ message: 'Email is already registered.' });  // 409 Conflict
+      return res.status(409).json({ message: 'Email is already registered.' }); // 409 Conflict
     }
 
-    // Generate an invite link or message
-    const inviteLink = `https://yourwebsite.com/signup?invite=${encodeURIComponent(email)}`;
+    // Generate an invite link
+    const inviteToken = encodeURIComponent(email);
+    const inviteLink = `https://yourwebsite.com/signup?invite=${inviteToken}`;
     const emailSubject = 'You are invited to join our platform!';
     const emailBody = `Hello,\n\nYou have been invited to register at our platform. Please click the following link to sign up: ${inviteLink}\n\nBest regards,\nYour Team`;
 
     // Send the invite email
     sendEmail(email, emailBody, emailSubject);
+
+    // Create an Invitation record
+    const invitation = new Invitation({
+      inviter: inviterId,
+      inviteeEmail: email,
+      inviteMethod: 'email',
+    });
+    await invitation.save();
 
     // Respond with success message
     res.status(200).json({ message: 'Invitation sent successfully to ' + email });
@@ -578,3 +702,4 @@ exports.invite = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
+

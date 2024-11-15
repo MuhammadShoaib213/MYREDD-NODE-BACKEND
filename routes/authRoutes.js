@@ -55,5 +55,7 @@ router.post('/reset-password', authController.resetPassword);
 
 router.post('/invite', authController.invite);
 
+router.post('/invite-sms', authenticateToken, authController.inviteBySMS);
+
 
 module.exports = router;
