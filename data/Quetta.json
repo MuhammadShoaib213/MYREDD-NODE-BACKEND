@@ -1,10 +1,10 @@
 {
-  areas [
-    Nawa Killi Road,
-    DHA Defence,
-    Chilten Housing Scheme,
-    Baba Fareed Housing Scheme,
-    Chaman Housing Scheme,
-    Samungli Road
+  "areas" : [
+    "Nawa Killi Road",
+    "DHA Defence",
+    "Chilten Housing Scheme",
+    "Baba Fareed Housing Scheme",
+    "Chaman Housing Scheme",
+    "Samungli Road"
   ]
 }
