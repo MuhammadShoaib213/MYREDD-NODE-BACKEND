@@ -26,6 +26,7 @@ const scheduleRoutes = require('./routes/scheduleRoutes');
 const sharedLeadRoutes = require('./routes/sharedLeadRoutes');
 const addressRoutes = require('./routes/addressRoutes'); // New address routes
 const customerInviteRoutes = require('./routes/customerInviteRoutes');
+const placesRouter = require('./routes/places');  
 
 const app = express();
 const server = http.createServer(app);
@@ -70,6 +71,7 @@ app.use('/api/schedules', scheduleRoutes);
 app.use('/api/shared-leads', sharedLeadRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/CustomerInvites', customerInviteRoutes);
+app.use('/api/places', placesRouter);
 
 app.get('/api/neighborhoods', async (req, res) => {
   const { latitude, longitude } = req.query;

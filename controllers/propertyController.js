@@ -264,111 +264,322 @@ const Customer = require('../models/Customer');
 //   }
 // };
 
-exports.addProperty = async (req, res) => {
-  console.log('Uploaded files:', req.files);
+// exports.addProperty = async (req, res) => {
+//   console.log('Uploaded files:', req.files);
 
+//   try {
+//     // Parse JSON fields if they exist and are strings
+//     const parseJSON = (data) => {
+//       try {
+//         return JSON.parse(data);
+//       } catch (e) {
+//         return data; // return as is if parsing fails
+//       }
+//     };
+
+//     const {
+//       cnicNumber,
+//       purpose,
+//       inquiryType,
+//       propertyType,
+//       propertySubType,
+//       city,
+//       area,
+//       phaseBlock,
+//       category,
+//       features,
+//       bedrooms,
+//       budget,
+//       advancePayment,
+//       timeForPayment,
+//       status,
+//       expected,
+//       length,
+//       width,
+//       closingDate,
+//       priority,
+//       commission
+//     } = req.body;
+
+//     const parsedInquiryType = parseJSON(inquiryType);
+//     const parsedPropertyType = parseJSON(propertyType);
+//     const parsedPropertySubType = parseJSON(propertySubType);
+//     const parsedFeatures = parseJSON(features);
+
+//     // Handle file uploads
+//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
+//     const video = req.files['video'] ? req.files['video'][0].path : '';
+
+//     // Fetch the Customer using only the cnicNumber
+//     const customer = await Customer.findOne({ cnicNumber: cnicNumber });
+//     if (!customer) {
+//       return res.status(400).json({ message: 'Customer not found' });
+//     }
+
+//     // Get the highest propertyNumber and increment it
+//     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
+//     let newPropertyNumber = 1; // Default starting number if no previous property exists
+
+//     if (lastProperty && lastProperty.propertyNumber) {
+//       newPropertyNumber = lastProperty.propertyNumber + 1;
+//     }
+
+//     // Create the property code
+//     const propertyCode = `${customer.customerId}${newPropertyNumber}`;
+
+//     // Create the new property with the generated propertyCode and propertyNumber
+//     const newProperty = new Property({
+//       cnicNumber,
+//       purpose,
+//       inquiryType: parsedInquiryType,
+//       propertyType: parsedPropertyType,
+//       propertySubType: parsedPropertySubType,
+//       city,
+//       area,
+//       phaseBlock,
+//       category,
+//       features: parsedFeatures,
+//       bedrooms,
+//       budget,
+//       advancePayment,
+//       timeForPayment,
+//       images,
+//       video,
+//       status,
+//       expected,
+//       length,
+//       width,
+//       closingDate,
+//       priority,
+//       commission,
+//       propertyNumber: newPropertyNumber,
+//       propertyCode: propertyCode // Set the property code
+//     });
+
+//     await newProperty.save();
+//     res.status(201).json({ 
+//       message: "Inquiry submitted successfully", 
+//       propertyId: newProperty._id,
+//       propertyCode: propertyCode // Return the property code
+//     });
+//   } catch (error) {
+//     console.error('Error adding property:', error);
+//     res.status(500).json({ message: "Failed to add property", error: error.message });
+//   }
+// };
+
+
+exports.addProperty = async (req, res) => {
   try {
-    // Parse JSON fields if they exist and are strings
-    const parseJSON = (data) => {
+    // 1. Log uploaded files
+    console.log('Uploaded files:', req.files);
+
+    // 2. Log the raw body
+    console.log('--- Raw req.body ---', req.body);
+
+    // 3. Parse nested JSON fields where necessary
+    const parsedBody = {};
+    Object.entries(req.body).forEach(([key, value]) => {
       try {
-        return JSON.parse(data);
-      } catch (e) {
-        return data; // return as is if parsing fails
+        parsedBody[key] = JSON.parse(value);
+      } catch (err) {
+        parsedBody[key] = value;
       }
-    };
+    });
+
+    console.log('--- Parsed req.body ---', parsedBody);
 
     const {
+      userId,
       cnicNumber,
-      purpose,
+      selectedCountry,
+      city,
+      district,
+      phaseBlock,
+      detectedAddress,
+      size,
+      sizeUnit,
+      coveredWidth,
+      coveredLength,
+      coveredDepth,
+      coveredUnit,
+      landWidth,
+      landLength,
+      landDepth,
+      landUnit,
+      propertyNumber,
+      streetName,
+      Streetwidth,
+      StreetwidthUnit,
+      propertyCondition,
+      demand,
+      contractTerm,
+      mainOption,
+      areaSociety,
       inquiryType,
       propertyType,
       propertySubType,
-      city,
-      area,
-      phaseBlock,
-      category,
-      features,
-      bedrooms,
+      facilities,
+      floors,
       budget,
-      advancePayment,
-      timeForPayment,
-      status,
-      expected,
-      length,
-      width,
-      closingDate,
+      advancePayment, // Changed from advanceAmount
       priority,
-      commission
-    } = req.body;
+      commission,
+      addedValue,
+    } = parsedBody;
 
-    const parsedInquiryType = parseJSON(inquiryType);
-    const parsedPropertyType = parseJSON(propertyType);
-    const parsedPropertySubType = parseJSON(propertySubType);
-    const parsedFeatures = parseJSON(features);
+    // 4. Validate required fields
+    if (!cnicNumber) {
+      return res.status(400).json({ message: 'CNIC number is required' });
+    }
 
-    // Handle file uploads
-    const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
-    const video = req.files['video'] ? req.files['video'][0].path : '';
-
-    // Fetch the Customer using only the cnicNumber
-    const customer = await Customer.findOne({ cnicNumber: cnicNumber });
+    // 5. Fetch the customer using the CNIC number
+    const customer = await Customer.findOne({ cnicNumber });
     if (!customer) {
       return res.status(400).json({ message: 'Customer not found' });
     }
 
-    // Get the highest propertyNumber and increment it
+    // 6. Get the highest propertyNumber and increment it
     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
-    let newPropertyNumber = 1; // Default starting number if no previous property exists
+    const newPropertyNumber = lastProperty?.propertyNumber
+      ? (parseInt(lastProperty.propertyNumber, 10) + 1).toString()
+      : '1';
 
-    if (lastProperty && lastProperty.propertyNumber) {
-      newPropertyNumber = lastProperty.propertyNumber + 1;
-    }
+    // 7. Ensure customer.customerId exists; fallback to _id if undefined
+    const customerId = customer.customerId || customer._id.toString();
 
-    // Create the property code
-    const propertyCode = `${customer.customerId}${newPropertyNumber}`;
+    // 8. Create the property code
+    const propertyCode = `${customerId}${newPropertyNumber}`;
 
-    // Create the new property with the generated propertyCode and propertyNumber
-    const newProperty = new Property({
+    // 9. Transform `facilities` into an array of { name, value }
+    const transformedFacilities = Array.isArray(facilities)
+      ? facilities.map((facility) => ({
+          name: facility.name?.trim() || 'Unknown',
+          value: ['Y', 'N'].includes(facility.value) ? facility.value : 'N',
+        }))
+      : [];
+
+    // 10. Transform `floors` into an array of { name, features }
+    const transformedFloors = Array.isArray(floors)
+      ? floors.map((floor) => ({
+          name: floor.name?.trim() || 'Unnamed Floor',
+          features: floor.features
+            ? Object.fromEntries(
+                Object.entries(floor.features).map(([featureName, featureValue]) => [
+                  featureName?.trim() || 'Unnamed Feature',
+                  Number(featureValue) || 0,
+                ])
+              )
+            : {},
+        }))
+      : [];
+
+    // 11. Transform budget, commission, and addedValue
+    const transformedBudget = {
+      min: budget?.min ? Number(budget.min) : 0,
+      max: budget?.max ? Number(budget.max) : 0,
+    };
+
+    const transformedCommission = {
+      type: ['percentage', 'fixed'].includes(commission?.type) ? commission.type : 'percentage',
+      value: commission?.value ? Number(commission.value) : 0,
+    };
+
+    const transformedAddedValue = {
+      type: ['percentage', 'fixed'].includes(addedValue?.type) ? addedValue.type : 'percentage',
+      value: addedValue?.value ? Number(addedValue.value) : 0,
+    };
+
+    // 12. Handle file uploads
+    const frontPictures = req.files?.frontPictures?.map((file) => file.path) || [];
+    const propertyPictures = req.files?.propertyPictures?.map((file) => file.path) || [];
+    const images = [...frontPictures, ...propertyPictures];
+    const video = req.files?.video?.[0]?.path || '';
+
+    // 13. Prepare the new property data
+    const newPropertyData = {
+      userId, // Reference to the user
       cnicNumber,
-      purpose,
-      inquiryType: parsedInquiryType,
-      propertyType: parsedPropertyType,
-      propertySubType: parsedPropertySubType,
+      selectedCountry,
       city,
-      area,
+      district,
       phaseBlock,
-      category,
-      features: parsedFeatures,
-      bedrooms,
-      budget,
-      advancePayment,
-      timeForPayment,
-      images,
-      video,
-      status,
-      expected,
-      length,
-      width,
-      closingDate,
+      detectedAddress,
+      size: size ? Number(size) : 0,
+      sizeUnit,
+      coveredWidth: coveredWidth ? Number(coveredWidth) : 0,
+      coveredLength: coveredLength ? Number(coveredLength) : 0,
+      coveredDepth: coveredDepth ? Number(coveredDepth) : 0,
+      coveredUnit,
+      landWidth: landWidth ? Number(landWidth) : 0,
+      landLength: landLength ? Number(landLength) : 0,
+      landDepth: landDepth ? Number(landDepth) : 0,
+      landUnit,
+      propertyNumber,
+      streetName,
+      Streetwidth: Streetwidth ? Number(Streetwidth) : 0,
+      StreetwidthUnit,
+      propertyCondition,
+      demand: demand ? Number(demand) : 0,
+      contractTerm, // Added contractTerm
+      mainOption,
+      areaSociety, // Ensure frontend sends this or handle accordingly
+      inquiryType,
+      propertyType,
+      propertySubType,
+      facilities: transformedFacilities,
+      floors: transformedFloors,
+      budget: transformedBudget,
+      advancePayment: advancePayment ? Number(advancePayment) : 0, // Changed from advanceAmount
       priority,
-      commission,
-      propertyNumber: newPropertyNumber,
-      propertyCode: propertyCode // Set the property code
-    });
+      commission: transformedCommission,
+      addedValue: transformedAddedValue,
+      frontPictures,
+      propertyPictures,
+      video,
+      propertyCode,
+      status: 'New',
+    };
 
+    // 14. Create and save the property
+    const newProperty = new Property(newPropertyData);
     await newProperty.save();
-    res.status(201).json({ 
-      message: "Inquiry submitted successfully", 
+
+    // 15. Return success response
+    res.status(201).json({
+      message: 'Property added successfully',
       propertyId: newProperty._id,
-      propertyCode: propertyCode // Return the property code
+      propertyCode,
     });
   } catch (error) {
     console.error('Error adding property:', error);
-    res.status(500).json({ message: "Failed to add property", error: error.message });
+
+    // Handle validation errors explicitly
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({
+        message: 'Validation error occurred',
+        errors: Object.keys(error.errors).map((key) => ({
+          field: key,
+          message: error.errors[key].message,
+        })),
+      });
+    }
+
+    // Handle MongoDB unique key errors
+    if (error.code === 11000) {
+      return res.status(400).json({
+        message: 'Duplicate key error',
+        details: error.keyValue,
+      });
+    }
+
+    // General error handling
+    res.status(500).json({
+      message: 'An unexpected error occurred while adding the property',
+      error: error.message,
+    });
   }
 };
-
-
 
 
 
