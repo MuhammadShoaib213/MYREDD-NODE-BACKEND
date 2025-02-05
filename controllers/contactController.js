@@ -10,7 +10,7 @@
 //     secure: true, // true for 465 (SSL), false for other ports
 //     auth: {
 //       user: 'contactform@myredd.net', // SMTP username
-//       pass: 'Con@Riyadh12' // SMTP password
+//       pass: 'Con@Riyadh123' // SMTP password
 //     }
 //   });
 
