@@ -1,19 +1,3 @@
-// // models/Friend.js
-// const mongoose = require('mongoose');
-
-// const friendSchema = new mongoose.Schema({
-//     users: [{
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: 'User'
-//     }],
-//     createdAt: {
-//         type: Date,
-//         default: Date.now
-//     }
-// });
-
-// module.exports = mongoose.model('Friend', friendSchema);
-
 const mongoose = require('mongoose');
 
 const friendSchema = new mongoose.Schema({

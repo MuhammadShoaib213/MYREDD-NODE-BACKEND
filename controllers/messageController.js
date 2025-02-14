@@ -57,29 +57,3 @@ module.exports = {
     saveMessage
 };
 
-// async function getOrCreateChat(user1Id, user2Id) {
-//     try {
-//       // Ensure the IDs are in a consistent order (smallest first)
-//       const ids = [user1Id, user2Id].sort();
-  
-//       // Try to find an existing chat with these two members
-//       let chat = await Chat.findOne({
-//         members: { $all: ids }
-//       });
-  
-//       // If no chat exists, create a new chat document
-//       if (!chat) {
-//         chat = new Chat({ members: ids });
-//         await chat.save();
-//         console.log("New chat created between users:", ids);
-//       } else {
-//         console.log("Existing chat found between users:", ids);
-//       }
-  
-//       return chat._id;
-//     } catch (error) {
-//       console.error("Error in getOrCreateChat:", error);
-//       throw error;  // Rethrow the error for handling in the calling function
-//     }
-//   }
-  

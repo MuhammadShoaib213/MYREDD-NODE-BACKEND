@@ -7,47 +7,6 @@ const Friend = require('../models/Friend'); // Model for confirmed friendships
 const Chat = require('../models/chat'); // Adjust the path as necessary
 const mongoose = require('mongoose');
 
-// router.post('/add', authenticateToken, async (req, res) => {
-//     const userEmail = req.user.email; // Email of the logged-in user
-//     const friendEmail = req.body.email; // Email of the friend to add
-
-//     console.log("Logged-in user email:", userEmail);
-//     console.log("Friend email to add:", friendEmail);
-
-//     if (!friendEmail) {
-//         return res.status(400).send('Friend email is required.');
-//     }
-
-//     try {
-//         const friend = await User.findOne({ email: friendEmail });
-//         if (!friend) {
-//             return res.status(404).send('Friend not found.');
-//         }
-
-//         console.log("Logged-in user ID:", req.user.id); // Ensure this is not undefined
-//         console.log("Friend ID:", friend._id); // Ensure this is not undefined
-
-//         const existingRequest = await FriendRequest.findOne({
-//             requester: req.user.id, // Use .id here instead of ._id
-//             requested: friend._id
-//         });
-
-//         if (existingRequest) {
-//             return res.status(409).send('Friend request already sent.');
-//         }
-
-//         const newRequest = await FriendRequest.create({
-//             requester: req.user.id, // Use .id here instead of ._id
-//             requested: friend._id
-//         });
-
-//         return res.status(201).json(newRequest);
-//     } catch (error) {
-//         console.error("Error sending friend request:", error);
-//         return res.status(500).json({ message: "Error sending friend request", error: error.message });
-//     }
-// });
-
 router.post('/add', authenticateToken, async (req, res) => {
     const userEmail = req.user.email;
     const friendEmail = req.body.email;
@@ -107,10 +66,6 @@ router.get('/requests', authenticateToken, async (req, res) => {
     }
 });
 
-// POST endpoint to accept a friend request
-// POST endpoint to accept a friend request
-// POST endpoint to accept a friend request
-// POST endpoint to accept a friend request
 router.post('/accept', authenticateToken, async (req, res) => {
     const requestId = req.body.requestId;
 

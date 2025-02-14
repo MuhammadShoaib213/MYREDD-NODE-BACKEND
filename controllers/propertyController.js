@@ -1,374 +1,6 @@
 const Property = require('../models/Property'); // Make sure this path is correct
 const Customer = require('../models/Customer'); 
 
-
-// Example modification to include JSON parsing
-// exports.addProperty = async (req, res) => {
-//   try {
-//     // Parse JSON fields if they exist and are strings
-//     const parseJSON = (data) => {
-//       try {
-//         return JSON.parse(data);
-//       } catch (e) {
-//         return data; // return as is if parsing fails
-//       }
-//     };
-
-//     const {
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType,
-//       propertyType,
-//       propertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     } = req.body;
-
-//     const parsedInquiryType = parseJSON(inquiryType);
-//     const parsedPropertyType = parseJSON(propertyType);
-//     const parsedPropertySubType = parseJSON(propertySubType);
-//     const parsedFeatures = parseJSON(features);
-
-//     // Handle file uploads
-//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
-//     const video = req.files['video'] ? req.files['video'][0].path : '';
-
-//     const newProperty = new Property({
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType: parsedInquiryType,
-//       propertyType: parsedPropertyType,
-//       propertySubType: parsedPropertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features: parsedFeatures,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       images,
-//       video,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     });
-
-//     await newProperty.save();
-//     res.status(201).json({ message: "Inquiry submitted successfully", property: newProperty });
-//   } catch (error) {
-//     console.error('Error adding property:', error);
-//     res.status(500).json({ message: "Failed to add property", error: error.message });
-//   }
-// };
-
-// exports.addProperty = async (req, res) => {
-//   console.log('Uploaded files:', req.files);
-
-//   try {
-//     // Parse JSON fields if they exist and are strings
-//     const parseJSON = (data) => {
-//       try {
-//         return JSON.parse(data);
-//       } catch (e) {
-//         return data; // return as is if parsing fails
-//       }
-//     };
-
-//     const {
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType,
-//       propertyType,
-//       propertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     } = req.body;
-
-//     const parsedInquiryType = parseJSON(inquiryType);
-//     const parsedPropertyType = parseJSON(propertyType);
-//     const parsedPropertySubType = parseJSON(propertySubType);
-//     const parsedFeatures = parseJSON(features);
-
-//     // Handle file uploads
-//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
-//     const video = req.files['video'] ? req.files['video'][0].path : '';
-
-//     const newProperty = new Property({
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType: parsedInquiryType,
-//       propertyType: parsedPropertyType,
-//       propertySubType: parsedPropertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features: parsedFeatures,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       images,
-//       video,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     });
-
-//     await newProperty.save();
-//     res.status(201).json({ 
-//       message: "Inquiry submitted successfully", 
-//       propertyId: newProperty._id  // Returning the property ID
-//     });
-//   } catch (error) {
-//     console.error('Error adding property:', error);
-//     res.status(500).json({ message: "Failed to add property", error: error.message });
-//   }
-// };
-
-// exports.addProperty = async (req, res) => {
-//   console.log('Uploaded files:', req.files);
-
-//   try {
-//     // Parse JSON fields if they exist and are strings
-//     const parseJSON = (data) => {
-//       try {
-//         return JSON.parse(data);
-//       } catch (e) {
-//         return data; // return as is if parsing fails
-//       }
-//     };
-
-//     const {
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType,
-//       propertyType,
-//       propertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     } = req.body;
-
-//     const parsedInquiryType = parseJSON(inquiryType);
-//     const parsedPropertyType = parseJSON(propertyType);
-//     const parsedPropertySubType = parseJSON(propertySubType);
-//     const parsedFeatures = parseJSON(features);
-
-//     // Handle file uploads
-//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
-//     const video = req.files['video'] ? req.files['video'][0].path : '';
-
-//     // Fetch the property with the highest propertyNumber and increment it for the new property
-//     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
-//     let newPropertyNumber = 1; // Default starting number if no previous property exists
-
-//     if (lastProperty && lastProperty.propertyNumber) {
-//       newPropertyNumber = lastProperty.propertyNumber + 1;
-//     }
-
-//     // Create the new property with the incremented propertyNumber
-//     const newProperty = new Property({
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType: parsedInquiryType,
-//       propertyType: parsedPropertyType,
-//       propertySubType: parsedPropertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features: parsedFeatures,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       images,
-//       video,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission,
-//       propertyNumber: newPropertyNumber // Assign the new propertyNumber
-//     });
-
-//     await newProperty.save();
-//     res.status(201).json({ 
-//       message: "Inquiry submitted successfully", 
-//       propertyId: newProperty._id,
-//       propertyNumber: newPropertyNumber // Returning the propertyNumber
-//     });
-//   } catch (error) {
-//     console.error('Error adding property:', error);
-//     res.status(500).json({ message: "Failed to add property", error: error.message });
-//   }
-// };
-
-// exports.addProperty = async (req, res) => {
-//   console.log('Uploaded files:', req.files);
-
-//   try {
-//     // Parse JSON fields if they exist and are strings
-//     const parseJSON = (data) => {
-//       try {
-//         return JSON.parse(data);
-//       } catch (e) {
-//         return data; // return as is if parsing fails
-//       }
-//     };
-
-//     const {
-//       cnicNumber,
-//       purpose,
-//       inquiryType,
-//       propertyType,
-//       propertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     } = req.body;
-
-//     const parsedInquiryType = parseJSON(inquiryType);
-//     const parsedPropertyType = parseJSON(propertyType);
-//     const parsedPropertySubType = parseJSON(propertySubType);
-//     const parsedFeatures = parseJSON(features);
-
-//     // Handle file uploads
-//     const images = req.files['images'] ? req.files['images'].map(file => file.path) : [];
-//     const video = req.files['video'] ? req.files['video'][0].path : '';
-
-//     // Fetch the Customer using only the cnicNumber
-//     const customer = await Customer.findOne({ cnicNumber: cnicNumber });
-//     if (!customer) {
-//       return res.status(400).json({ message: 'Customer not found' });
-//     }
-
-//     // Get the highest propertyNumber and increment it
-//     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
-//     let newPropertyNumber = 1; // Default starting number if no previous property exists
-
-//     if (lastProperty && lastProperty.propertyNumber) {
-//       newPropertyNumber = lastProperty.propertyNumber + 1;
-//     }
-
-//     // Create the property code
-//     const propertyCode = `${customer.customerId}${newPropertyNumber}`;
-
-//     // Create the new property with the generated propertyCode and propertyNumber
-//     const newProperty = new Property({
-//       cnicNumber,
-//       purpose,
-//       inquiryType: parsedInquiryType,
-//       propertyType: parsedPropertyType,
-//       propertySubType: parsedPropertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features: parsedFeatures,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       images,
-//       video,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission,
-//       propertyNumber: newPropertyNumber,
-//       propertyCode: propertyCode // Set the property code
-//     });
-
-//     await newProperty.save();
-//     res.status(201).json({ 
-//       message: "Inquiry submitted successfully", 
-//       propertyId: newProperty._id,
-//       propertyCode: propertyCode // Return the property code
-//     });
-//   } catch (error) {
-//     console.error('Error adding property:', error);
-//     res.status(500).json({ message: "Failed to add property", error: error.message });
-//   }
-// };
-
-
 exports.addProperty = async (req, res) => {
   try {
     // 1. Log uploaded files
@@ -581,23 +213,6 @@ exports.addProperty = async (req, res) => {
   }
 };
 
-
-
-
-// Fetch all properties from the database
-// exports.fetchAllProperties = async (req, res) => {
-//   try {
-//     const properties = await Property.find({}); // Fetch all properties without any conditions
-//     res.status(200).json(properties); // Send the fetched properties back to the client
-//   } catch (error) {
-//     console.error('Failed to fetch properties:', error);
-//     res.status(500).json({ message: "Failed to fetch properties", error: error.message });
-//   }
-// };
-
-
-// Assuming 'Property' is your Mongoose model for the properties collection
-
 exports.fetchAllProperties = async (req, res) => {
   try {
     const userId = req.query.userId;  // Get user ID from query parameters
@@ -740,60 +355,12 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
   }
 };
 
-
-
-
-// exports.fetchleads = async (req, res) => {
-//   try {
-//     const userId = req.params.userId; // Assuming you are passing user ID as a URL parameter
-//     console.log(`Fetching properties for user ID: ${userId}`); // Log the user ID being queried
-
-//     // Fetch all properties associated with the user ID
-//     const properties = await Property.find({ userId: userId });
-//     console.log(`Number of properties found: ${properties.length}`); // Log the count of properties found
-
-//     if (!properties.length) {
-//       console.log("No properties found for this user."); // Log if no properties are found
-//       return res.status(404).json({ message: "No properties found for this user." });
-//     }
-
-//     // Extracting the inquiry types from each property
-//     const propertiesWithInquiryType = properties.map(property => {
-//       console.log(`Processing property ID: ${property._id}`); // Log the processing of each property
-//       return {
-//         _id: property._id,
-//         inquiryType: property.inquiryType,
-//         description: property.description, // Add other fields you may need to return
-//         propertySubType: property.propertySubType,
-//         propertyType: property.propertyType,
-//         dateAdded: property.createdAt, // Returning the date the property was added to the database
-//         status: property.status,
-//         advancePayment: property.advancePayment,
-//         propertySubType: property.propertySubType,
-//         expected: property.expected,
-//         length:property.length,
-//         width: property.width,
-//         features: property.features,
-//         closingDate: property.closingDate
-//         // Other fields can be added here if needed
-//       };
-//     });
-
-//     console.log(`Properties with inquiry types prepared for response`); // Log when data is ready to be sent back
-//     // Return the properties with their inquiry types
-//     res.status(200).json(propertiesWithInquiryType);
-//   } catch (error) {
-//     console.error('Failed to fetch properties:', error);
-//     res.status(500).json({ message: "Failed to fetch properties", error: error.message });
-//   }
-// };
-
-
 exports.fetchleads = async (req, res) => {
   try {
     const userId = req.params.userId;
     console.log(`Fetching properties for user ID: ${userId}`);
 
+    // Find all properties that belong to this user
     const properties = await Property.find({ userId: userId });
     console.log(`Number of properties found: ${properties.length}`);
 
@@ -802,40 +369,62 @@ exports.fetchleads = async (req, res) => {
       return res.status(404).json({ message: "No properties found for this user." });
     }
 
-    // Map through each property to fetch customer names
-    const propertiesWithCustomerNames = await Promise.all(properties.map(async property => {
-      console.log(`Processing property ID: ${property._id}`);
+    // Map through each property to include additional details (like the customer name)
+    const propertiesWithCustomerNames = await Promise.all(
+      properties.map(async property => {
+        console.log(`Processing property ID: ${property._id}`);
 
-      // Fetch the customer name using the CNIC number
-      const customer = await Customer.findOne({ cnicNumber: property.cnicNumber });
+        // Fetch the customer using the CNIC number
+        const customer = await Customer.findOne({ cnicNumber: property.cnicNumber });
 
-      return {
-        _id: property._id,
-        cnicNumber: property.cnicNumber,
-        purpose: property.purpose,
-        status: property.status,
-        inquiryType: property.inquiryType,
-        propertyType: property.propertyType,
-        propertySubType: property.propertySubType,
-        city: property.city,
-        area: property.area,
-        phaseBlock: property.phaseBlock,
-        category: property.category,
-        features: property.features,
-        bedrooms: property.bedrooms,
-        length: property.length,
-        width: property.width,
-        budget: property.budget,
-        advancePayment: property.advancePayment,
-        expected: property.expected,
-        closingDate: property.closingDate,
-        timeForPayment: property.timeForPayment,
-        images: property.images,
-        video: property.video,
-        dateAdded: property.createdAt,
-        customerName: customer ? customer.fullName : 'Unknown' // Assuming the customer model has a fullName field
-      };
-    }));
+        return {
+          _id: property._id,
+          propertyCode: property.propertyCode,
+          cnicNumber: property.cnicNumber,
+          status: property.status,
+          inquiryType: property.inquiryType,
+          propertyType: property.propertyType,
+          propertySubType: property.propertySubType,
+          city: property.city,
+          district: property.district,               // New field
+          phaseBlock: property.phaseBlock,
+          detectedAddress: property.detectedAddress,   // New field
+          size: property.size,
+          sizeUnit: property.sizeUnit,
+          // Covered dimensions
+          coveredWidth: property.coveredWidth,
+          coveredLength: property.coveredLength,
+          coveredDepth: property.coveredDepth,
+          coveredUnit: property.coveredUnit,
+          // Land dimensions
+          landWidth: property.landWidth,
+          landLength: property.landLength,
+          landDepth: property.landDepth,
+          landUnit: property.landUnit,
+          propertyNumber: property.propertyNumber,
+          streetName: property.streetName,
+          Streetwidth: property.Streetwidth,
+          StreetwidthUnit: property.StreetwidthUnit,
+          propertyCondition: property.propertyCondition,
+          demand: property.demand,
+          contractTerm: property.contractTerm,
+          mainOption: property.mainOption,
+          areaSociety: property.areaSociety,
+          facilities: property.facilities,       // Array of facilities (each with a name and value)
+          floors: property.floors,                 // Array of floors
+          budget: property.budget,
+          advancePayment: property.advancePayment,
+          priority: property.priority,
+          commission: property.commission,         // Commission object (with type and value)
+          addedValue: property.addedValue,         // Added value object
+          frontPictures: property.frontPictures,   // Array of image paths for front pictures
+          propertyPictures: property.propertyPictures, // Array of property image paths
+          video: property.video,
+          dateAdded: property.createdAt,
+          customerName: customer ? customer.fullName : 'Unknown'  // Assuming Customer has a fullName field
+        };
+      })
+    );
 
     console.log("Properties with customer names prepared for response");
     res.status(200).json(propertiesWithCustomerNames);
@@ -922,89 +511,6 @@ const parseJSON = (data) => {
     return data; // Return as-is if parsing fails
   }
 };
-
-// // Update Property Controller
-// exports.updateProperty = async (req, res) => {
-//   console.log('Received request to update property:', req.params.id);
-//   console.log('Uploaded files:', req.files);
-
-//   try {
-//     const propertyId = req.params.id;
-
-//     // Fetch the existing property
-//     const property = await Property.findById(propertyId);
-//     if (!property) {
-//       return res.status(404).json({ message: "Property not found" });
-//     }
-
-//     // Extract fields from request body
-//     const {
-//       userId,
-//       cnicNumber,
-//       purpose,
-//       inquiryType,
-//       propertyType,
-//       propertySubType,
-//       city,
-//       area,
-//       phaseBlock,
-//       category,
-//       features,
-//       bedrooms,
-//       budget,
-//       advancePayment,
-//       timeForPayment,
-//       status,
-//       expected,
-//       length,
-//       width,
-//       closingDate,
-//       priority,
-//       commission
-//     } = req.body;
-
-//     // Parse JSON fields if necessary
-//     const parsedInquiryType = inquiryType ? parseJSON(inquiryType) : property.inquiryType;
-//     const parsedPropertyType = propertyType ? parseJSON(propertyType) : property.propertyType;
-//     const parsedPropertySubType = propertySubType ? parseJSON(propertySubType) : property.propertySubType;
-//     const parsedFeatures = features ? parseJSON(features) : property.features;
-
-
-
-//     // Update the property fields
-//     property.userId = userId || property.userId;
-//     property.cnicNumber = cnicNumber || property.cnicNumber;
-//     property.purpose = purpose || property.purpose;
-//     property.inquiryType = parsedInquiryType;
-//     property.propertyType = parsedPropertyType;
-//     property.propertySubType = parsedPropertySubType;
-//     property.city = city || property.city;
-//     property.area = area || property.area;
-//     property.phaseBlock = phaseBlock || property.phaseBlock;
-//     property.category = category || property.category;
-//     property.features = parsedFeatures;
-//     property.bedrooms = bedrooms !== undefined ? bedrooms : property.bedrooms;
-//     property.budget = budget !== undefined ? budget : property.budget;
-//     property.advancePayment = advancePayment !== undefined ? advancePayment : property.advancePayment;
-//     property.timeForPayment = timeForPayment || property.timeForPayment;
-//     property.status = status || property.status;
-//     property.expected = expected || property.expected;
-//     property.length = length !== undefined ? length : property.length;
-//     property.width = width !== undefined ? width : property.width;
-//     property.closingDate = closingDate || property.closingDate;
-//     property.priority = priority || property.priority;
-//     property.commission = commission !== undefined ? commission : property.commission;
-
-
-//     // Save the updated property
-//     await property.save();
-
-//     res.status(200).json({ message: "Property updated successfully", property });
-//   } catch (error) {
-//     console.error('Error updating property:', error);
-//     res.status(500).json({ message: "Failed to update property", error: error.message });
-//   }
-// };
 
 // Update Property Controller
 exports.updateProperty = async (req, res) => {

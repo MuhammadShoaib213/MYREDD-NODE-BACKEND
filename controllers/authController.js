@@ -10,48 +10,6 @@ const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const Invitation = require('../models/Invitation');
 
 
-
-
-// function validatePassword(password) {
-//   const regex = /^(?=.\d)(?=.[a-z])(?=.[A-Z])(?=.[a-zA-Z]).{8,}$/; // Regex for validation
-//   return regex.test(password);
-// }
-
-
-
-// exports.signup = async (req, res) => {
-//   const { firstName, lastName, email, password, userRole, cnic, phoneNumber } = req.body;
-//   try {
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: 'Email is already registered' });
-//     }
-    
-//     // if (!validatePassword(password)) {
-//     //   return res.status(400).json({ message: 'Password does not meet complexity requirements.' });
-//     // }
-
-//     const hashedPassword = await bcrypt.hash(password, 12);
-//     const newUser = new User({
-//       firstName,
-//       lastName,
-//       email,
-//       password: hashedPassword,
-//       userRole,
-//       cnic,
-//       phoneNumber
-//     });
-    
-
-//     await newUser.save();
-//     res.status(201).json({ message: 'User created successfully' });
-//   } catch (error) {
-//     console.error('Error creating user:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// };
-
-
 exports.signup = async (req, res) => {
   const { firstName, lastName, email, password, userRole, cnic, phoneNumber, agencyId, country, city } = req.body;
 
@@ -324,59 +282,6 @@ exports.getProfile = async (req, res) => {
 };
 
 
-// // exports.updateProfile = async (req, res) => {
-// //   const userId = req.params.id;
-// //   const updates = req.body;
-
-// //   // Fields that are allowed to be updated
-// //   const allowedUpdates = ['firstName', 'lastName', 'phoneNumber', 'whatsappNumber', 'country', 'city', 'location', 'businessInfo', 'businessLogo', 'businessName', 'businessOwnerName', 'businessWorkingArea', 'businessNTN', 'residential', 'commercial', 'land', 'experience', 'skills', 'dateOfBirth', 'age'];
-// //   const actualUpdates = {};
-
-// //   // Filter out any field that is not allowed to be updated
-// //   Object.keys(updates).forEach(key => {
-// //     if (allowedUpdates.includes(key) && updates[key] != null) { // Ensure the field is allowed and not null
-// //       actualUpdates[key] = updates[key];
-// //     }
-// //   });
-
-// //   try {
-// //     const user = await User.findByIdAndUpdate(userId, actualUpdates, { new: true, runValidators: true });
-// //     if (!user) {
-// //       return res.status(404).json({ message: 'User not found' });
-// //     }
-// //     res.json({ message: 'Profile updated successfully', user });
-// //   } catch (error) {
-// //     console.error('Error updating user profile:', error);
-// //     res.status(500).json({ message: 'Internal server error', error: error.message });
-// //   }
-// // };
-
-// exports.updateProfile = async (req, res) => {
-//   const userId = req.params.id;
-//   const updates = req.body; // This contains the text fields
-
-//   // Add image URLs if files were uploaded
-//   if (req.files['profilePicture']) {
-//     updates.profilePicture = req.files['profilePicture'][0].path;
-//   }
-//   if (req.files['businessLogo']) {
-//     updates.businessLogo = req.files['businessLogo'][0].path;
-//   }
-
-//   try {
-//     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-//     res.json({ message: 'Profile updated successfully', user });
-//     await user.save();
-//   } catch (error) {
-//     console.error('Error updating user profile:', error);
-//     res.status(500).json({ message: 'Internal server error', error: error.message });
-//   }
-// };
-
-
 function calculateProfileCompletion(user) {
   const optionalFields = [
     'whatsappNumber', 'profilePicture', 'country', 'city', 'location', 
@@ -437,42 +342,6 @@ exports.updateProfile = async (req, res) => {
     res.status(500).json({ message: errorMessage, error: error.message });
   }
 };
-
-
-
-
-// exports.updateProfile = async (req, res) => {
-//   const userId = req.params.id;
-//   const updates = req.body; // This contains the text fields
-
-//   // Add image URLs if files were uploaded
-//   if (req.files['profilePicture']) {
-//     updates.profilePicture = req.files['profilePicture'][0].path;
-//   }
-//   if (req.files['businessLogo']) {
-//     updates.businessLogo = req.files['businessLogo'][0].path;
-//   }
-
-//   try {
-//     const user = await User.findByIdAndUpdate(userId, updates, { new: true, runValidators: true });
-//     if (!user) {
-//       return res.status(404).json({ message: 'User not found' });
-//     }
-//     res.json({ message: 'Profile updated successfully', user });
-//     await user.save();
-//   } catch (error) {
-//     console.error('Error updating user profile:', error);
-
-//     let errorMessage = 'Internal server error';
-//     if (error.name === 'ValidationError') {
-//       errorMessage = 'Validation error: ' + error.message;
-//     } else if (error.name === 'CastError') {
-//       errorMessage = `Invalid value for ${error.path}: ${error.value}`;
-//     }
-
-//     res.status(500).json({ message: errorMessage, error: error.message });
-//   }
-// };
 
 
 exports.searchUsers = async (req, res) => {
@@ -582,34 +451,6 @@ exports.resetPassword = async (req, res) => {
   res.json({ message: 'Password has been reset successfully. You can now log in with the new password.' });
 };
 
-
-
-// // Function to invite a new user by email
-// exports.invite = async (req, res) => {
-//   const { email } = req.body;
-
-//   try {
-//     // Check if the user already exists
-//     const userExists = await User.findOne({ email });
-//     if (userExists) {
-//       return res.status(409).json({ message: 'Email is already registered.' });  // 409 Conflict
-//     }
-
-//     // Generate an invite link or message
-//     const inviteLink = `https://yourwebsite.com/signup?invite=${encodeURIComponent(email)}`;
-//     const emailSubject = 'You are invited to join our platform!';
-//     const emailBody = `Hello,\n\nYou have been invited to register at our platform. Please click the following link to sign up: ${inviteLink}\n\nBest regards,\nYour Team`;
-
-//     // Send the invite email
-//     sendEmail(email, emailBody, emailSubject);
-
-//     // Respond with success message
-//     res.status(200).json({ message: 'Invitation sent successfully to ' + email });
-//   } catch (error) {
-//     console.error('Invite Error:', error);
-//     res.status(500).json({ message: 'Internal server error', error: error.message });
-//   }
-// };
 
 
 // Function to invite a new user by SMS

@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // const nodemailer = require('nodemailer');
 
 // exports.sendEmail = async (req, res) => {
@@ -36,6 +37,8 @@
 // };
 
 
+=======
+>>>>>>> 81eef6d (Final version)
 const nodemailer = require('nodemailer');
 
 exports.sendEmail = async (req, res) => {

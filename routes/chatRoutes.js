@@ -59,43 +59,7 @@ module.exports = function(io) {
         }
     });
     
-    
 
-    // router.post('/send', authenticateToken, async (req, res) => {
-    //     console.log("Received request to send message with body:", req.body);
-    //     try {
-            
-    //         const { content } = req.body;
-    //         const senderId = req.user.id;
-    //         const recipientId = req.user.recipientId;
-    //         console.log(recipientId);
-    //         const chatId = await getOrCreateChat(senderId, recipientId);
-    //         if (!content || !chatId) {
-    //             console.log("Error: Missing required fields", { content, chatId, senderId });
-    //             return res.status(400).json({ message: "Missing required fields" });
-    //         }
-
-    //         const message = await saveMessage({ content, chatId, senderId });
-    //         console.log("Message saved and emitting to room:", { chatId, message });
-    //         io.to(chatId).emit('newMessage', message);
-    //         res.status(201).json(message);
-    //     } catch (error) {
-    //         console.error("Failed to send message:", error);
-    //         res.status(500).json({ message: "Internal server error", error: error.toString() });
-    //     }
-    // });
-
-    // router.get('/chat/:senderId/:recipientId', authenticateToken, async (req, res) => {
-    //     const { senderId, recipientId } = req.params;
-    //     try {
-    //         const chatId = await getOrCreateChat(senderId, recipientId);
-    //         res.status(200).json({ chatId });
-    //     } catch (error) {
-    //         console.error("Failed to retrieve or create chat:", error);
-    //         res.status(500).json({ message: "Internal server error", error: error.toString() });
-    //     }
-    // });
-    // Fetches the chat ID if it exists for given senderId and recipientId
 router.get('/chat/:senderId/:recipientId', authenticateToken, async (req, res) => {
     const { senderId, recipientId } = req.params;
     try {
@@ -110,21 +74,6 @@ router.get('/chat/:senderId/:recipientId', authenticateToken, async (req, res) =
         res.status(500).json({ message: "Internal server error", error: error.toString() });
     }
 });
-
-    // Get messages for a specific chat
-// router.get('/fetch/:chatId', authenticateToken, async (req, res) => {
-//     const { chatId } = req.params;
-//     try {
-//         // Assuming Message model has a reference to Chat via 'chatId'
-//         const messages = await Message.find({ chatId: chatId }).sort({ createdAt: 1 });
-//         res.status(200).json(messages);
-//         console.log("ChatID:", chatId);
-//         console.log("messages:", messages);
-//     } catch (error) {
-//         console.error("Failed to fetch messages:", error);
-//         res.status(500).json({ message: "Internal server error", error: error.toString() });
-//     }
-// });
 
 router.get('/fetch/:chatId', authenticateToken, async (req, res) => {
     const { chatId } = req.params;
@@ -154,28 +103,6 @@ router.get('/fetch/:chatId', authenticateToken, async (req, res) => {
     return router;
 };
 
-
-// async function getOrCreateChat(senderId, recipientId) {
-//     try {
-//         // Check if there's an existing chat with these two users
-//         let chat = await Chat.findOne({
-//             participants: { $all: [senderId, recipientId] }
-//         });
-
-//         if (!chat) {
-//             // If no chat exists, create a new one
-//             chat = new Chat({
-//                 participants: [senderId, recipientId]
-//             });
-//             await chat.save();
-//         }
-
-//         return chat._id;
-//     } catch (error) {
-//         console.error("Error in getOrCreateChat:", error);
-//         throw error;
-//     }
-// }
 
 async function getChatId(senderId, recipientId) {
     try {

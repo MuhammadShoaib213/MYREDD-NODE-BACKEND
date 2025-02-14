@@ -199,45 +199,6 @@ exports.getFriendsList = async (req, res) => {
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
-// exports.getFriendsBySpecificCity = async (req, res) => {
-//     const userId = req.user.id;
-//     const { cityName } = req.params;
-
-//     try {
-//         // Fetching all accepted friendships
-//         const friends = await Friends.find({
-//             $or: [
-//                 { requester: userId, status: 'accepted' },
-//                 { recipient: userId, status: 'accepted' }
-//             ]
-//         })
-//         .populate('requester', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city')
-//         .populate('recipient', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city')
-//         .exec();
-
-//         const results = friends.reduce((acc, friend) => {
-//             const friendData = friend.requester._id.toString() === userId ? friend.recipient : friend.requester;
-
-//             // Determine the correct city to compare
-//             const friendCity = friendData.city ? friendData.city.toLowerCase() : 'others';
-
-//             // Compare either exact match or 'others'
-//             if (friendData && (friendCity === cityName.toLowerCase() || (!friendData.city && cityName.toLowerCase() === 'others'))) {
-//                 acc.push(friendData);
-//             }
-//             return acc;
-//         }, []);
-
-//         if (!results.length) {
-//             return res.status(404).json({ message: `No friends found in ${cityName}` });
-//         }
-
-//         res.json(results);
-//     } catch (error) {
-//         console.error(`Error fetching friends from ${cityName}:`, error);
-//         res.status(500).json({ message: 'Internal server error', error: error.message });
-//     }
-// };
 
 exports.getFriendsBySpecificCity = async (req, res) => {
     const userId = req.user.id;

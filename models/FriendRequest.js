@@ -1,14 +1,3 @@
-// const mongoose = require('mongoose');
-// const Schema = mongoose.Schema;
-
-// const friendRequestSchema = new Schema({
-//     requester: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-//     requested: { type: Schema.Types.ObjectId, ref: 'User', required: true }
-// });
-
-// module.exports = mongoose.model('FriendRequest', friendRequestSchema);
-
-
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
