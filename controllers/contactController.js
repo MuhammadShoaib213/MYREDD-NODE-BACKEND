@@ -9,8 +9,8 @@ exports.sendEmail = async (req, res) => {
     port: 465, // Common port for SMTP - adjust if necessary
     secure: true, // true for 465 (SSL), false for other ports
     auth: {
-      user: 'contactform@myredd.net', // SMTP username
-      pass: 'Con@Riyadh12' // SMTP password
+      user: CONTACT_SMTP_USER, // SMTP username
+      pass: CONTACT_SMTP_PASS // SMTP password
     }
   });
 
