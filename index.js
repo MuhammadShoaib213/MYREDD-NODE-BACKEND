@@ -26,7 +26,7 @@ const friendsRoutes = require('./routes/friendsRoutes');
 const noteRoutes = require('./routes/noteRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const sharedLeadRoutes = require('./routes/sharedLeadRoutes');
-const addressRoutes = require('./routes/addressRoutes'); // New address routes
+const addressRoutes = require('./routes/addressRoutes');
 const customerInviteRoutes = require('./routes/customerInviteRoutes');
 const placesRouter = require('./routes/places');
 
@@ -49,39 +49,45 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-// ====== 3) Mongo Sanitize & Helmet (with custom CSP) ======
+// ====== 3) Mongo Sanitize & Helmet (with updated CSP, frameguard, nosniff) ======
 app.use(mongoSanitize());
 
+// Configure Helmet to fix the findings in ZAP scan:
 app.use(helmet({
+  // 1. Add a more restricted Content-Security-Policy
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'",
-        // "'unsafe-inline'", // Uncomment if you rely on inline <script> blocks
-        // "'unsafe-eval'",  // Uncomment if you rely on eval() in dev tools
+        // "'unsafe-inline'", // remove or uncomment carefully if needed
       ],
       styleSrc: [
         "'self'",
-        "'unsafe-inline'", // needed if you have inline <style> or inlined CSS
+        "'unsafe-inline'", // if you rely on inline styles, else remove it
       ],
       imgSrc: [
         "'self'",
         "data:",
         "blob:",
       ],
+      // Remove the generic 'ws:', 'http:', 'https:', etc. 
+      // Instead specify exact domains if possible:
       connectSrc: [
         "'self'",
-        "ws:",
-        "wss:",
-        "http:",
-        "https:",
+        // Add the explicit socket domain if you use Socket.io with a known port:
+        "ws://195.179.231.102:6003",
+        "wss://195.179.231.102:6003",
       ],
       objectSrc: ["'none'"],
       upgradeInsecureRequests: [],
     },
-    // If you need to customize more, you can do so here
   },
+  // 2. Anti-clickjacking (X-Frame-Options)
+  frameguard: { action: 'SAMEORIGIN' }, 
+  // 3. X-Content-Type-Options
+  noSniff: true,
+  // 4. Cross-origin resource policy (if needed)
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
