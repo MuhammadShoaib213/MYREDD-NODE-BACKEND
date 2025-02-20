@@ -36,12 +36,13 @@ const PORT = process.env.PORT || 6003;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // ====== 1) Refined CORS Configuration ======
-app.use(cors({
-  origin: 'http://195.179.231.102', // Only allow requests from your front-end domain
+app.options('*', cors({
+  origin: 'http://195.179.231.102',
   methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
 }));
+
 
 // ====== 2) Parse Request Bodies ======
 app.use(express.json());
@@ -198,6 +199,11 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   // In production, consider logging the error to a file or external logging service
   res.status(500).json({ error: 'Internal server error' });
+});
+
+
+app.get('/', (req, res) => {
+  res.send('myredd backed running');
 });
 
 
