@@ -74,8 +74,10 @@ const PropertySchema = new mongoose.Schema(
     propertySubType: { 
       type: String, 
       enum: [
-        'home', 'apartment', 'villas', 'farmHouse', 
-        'office', 'shop', 'warehouse', 'factory', 'agricultural'
+        'home', 'apartment', 'villas', 'duplex', 'condos', 'studio', 'farmHouse',
+        'chalet', ' building', 'hotel', 'light manufacturing', ' heavy manufcaturing', 'cold storage',
+        'office', 'shop', 'warehouse', 'factory', 'agricultural',
+        'commercial', 'residential','agricultural','farm','industrial','education','raw'
       ] 
     },
     facilities: [FacilitiesSchema],

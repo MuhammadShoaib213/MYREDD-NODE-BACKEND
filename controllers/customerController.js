@@ -127,11 +127,15 @@ exports.addCustomer = async (req, res) => {
 };
 
 
-// Controller to check customer details
+/// Controller to check customer details
 exports.checkCustomer = async (req, res) => {
-  const { cnicNumber, phoneNumber } = req.query;
-  console.log(`Checking customer with CNIC: ${cnicNumber} and Phone: ${phoneNumber}`);
+  const { cnicNumber, phoneNumber, userId } = req.query;
+  console.log(
+    `Checking customer with CNIC: ${cnicNumber}, Phone: ${phoneNumber}, userId: ${userId}`
+  );
+
   let query = {};
+  // If you only want to match by CNIC, you can remove the phone logic below.
   if (cnicNumber) {
     query.cnicNumber = cnicNumber;
   }
@@ -139,21 +143,47 @@ exports.checkCustomer = async (req, res) => {
     query.$or = [
       { officialMobile: phoneNumber },
       { personalMobile: phoneNumber },
-      { whatsappMobile: phoneNumber }
+      { whatsappMobile: phoneNumber },
     ];
   }
+
   try {
     const customer = await Customer.findOne(query);
-    if (customer) {
-      console.log('Customer found:', customer);
-      res.json({ exists: true, customer });
-    } else {
+
+    if (!customer) {
       console.log('Customer not found with provided identifiers:', query);
-      res.status(404).json({ exists: false, message: "Customer not found with the provided identifiers." });
+      return res.status(404).json({
+        exists: false,
+        message: 'Customer not found with the provided identifiers.',
+      });
     }
+
+    // If the customer is found, check if the customer belongs to this user:
+    // (Adjust `customer.userId` or `customer.addedBy` depending on your schema)
+    if (!customer.userId) {
+      return res.status(500).json({
+        exists: false,
+        message: 'Customer does not have an associated userId in the database.',
+      });
+    }
+
+    // Compare the string versions of IDs or cast to ObjectId if necessary
+    if (customer.userId.toString() !== userId) {
+      console.log(`User mismatch: customer belongs to ${customer.userId}, not ${userId}`);
+      return res.status(403).json({
+        exists: false,
+        message: 'Customer not found with entered NIC.',
+      });
+    }
+
+    // If we reach here, the customer belongs to the current user
+    console.log('Customer found and belongs to user:', userId);
+    return res.json({ exists: true, customer });
   } catch (error) {
     console.error('Database query error during customer check:', error);
-    res.status(500).send({ message: `Error during customer check: ${error.message}` });
+    return res
+      .status(500)
+      .send({ message: `Error during customer check: ${error.message}` });
   }
 };
 

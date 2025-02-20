@@ -340,8 +340,12 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
         propertyType: property.propertyType,
         dateAdded: property.createdAt, // Returning the date the property was added to the database
         status: property.status,
-        advancePayment: property.advancePayment,
-        propertySubType: property.propertySubType
+        propertySubType: property.propertySubType,
+        commission : property.commission,
+        addedValue : property.addedValue,
+        demand : property.demand,
+        budget : property.budget,
+        
         // Other fields can be added here if needed
       };
     });
