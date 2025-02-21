@@ -63,23 +63,23 @@ app.use(mongoSanitize());
 
 // Configure Helmet to address reported issues:
 app.use(helmet({
-  // 1. Set a restrictive Content Security Policy (CSP)
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"], // Remove 'unsafe-inline' if possible by using nonces
+      styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: ["'self'", "ws://195.179.231.102:6003", "wss://195.179.231.102:6003"],
+      connectSrc: [
+        "'self'", 
+        "http://195.179.231.102:6003", // Add this
+        "ws://195.179.231.102:6003", 
+        "wss://195.179.231.102:6003"
+      ],
       objectSrc: ["'none'"],
-      // upgradeInsecureRequests can be added if needed, but ensure your app supports HTTPS.
     },
   },
-  // 2. Set anti-clickjacking header
   frameguard: { action: 'SAMEORIGIN' },
-  // 3. Set X-Content-Type-Options header to prevent MIME type sniffing
   noSniff: true,
-  // 4. Set cross-origin resource policy (if applicable)
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
