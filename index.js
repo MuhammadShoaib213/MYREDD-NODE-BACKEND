@@ -28,6 +28,7 @@ const sharedLeadRoutes = require('./routes/sharedLeadRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const customerInviteRoutes = require('./routes/customerInviteRoutes');
 const placesRouter = require('./routes/places');
+const adminRoutes = require('./routes/adminRoutes');  
 
 const app = express();
 const server = http.createServer(app);
@@ -36,11 +37,9 @@ const PORT = process.env.PORT || 6003;
 const MONGODB_URI = process.env.MONGODB_URI;
 
 // ====== 1) Refined CORS Configuration ======
-app.options('*', cors({
-  origin: 'http://195.179.231.102',
-  methods: ['GET', 'POST', 'PATCH', 'DELETE', 'PUT'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
+app.use(cors({
+  origin: true,
+  credentials: true
 }));
 
 
@@ -62,24 +61,18 @@ app.use((req, res, next) => {
 app.use(mongoSanitize());
 
 // Configure Helmet to address reported issues:
+// Simplified Helmet configuration
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      defaultSrc: ["'self'"],
-      scriptSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "blob:"],
-      connectSrc: [
-        "'self'", 
-        "http://195.179.231.102:6003", // Add this
-        "ws://195.179.231.102:6003", 
-        "wss://195.179.231.102:6003"
-      ],
+      defaultSrc: ["'self'", "http://195.179.231.102"],
+      scriptSrc: ["'self'", "http://195.179.231.102"],
+      styleSrc: ["'self'", "'unsafe-inline'", "http://195.179.231.102"],
+      imgSrc: ["'self'", "data:"],
+      connectSrc: ["'self'", "http://195.179.231.102", "ws:", "wss:"],
       objectSrc: ["'none'"],
     },
   },
-  frameguard: { action: 'SAMEORIGIN' },
-  noSniff: true,
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
 
@@ -113,6 +106,7 @@ app.use('/api/shared-leads', sharedLeadRoutes);
 app.use('/api/address', addressRoutes);
 app.use('/api/CustomerInvites', customerInviteRoutes);
 app.use('/api/places', placesRouter);
+app.use('/api/admin', adminRoutes);
 
 // Example route for neighborhoods (Google Maps API)
 app.get('/api/neighborhoods', async (req, res) => {
