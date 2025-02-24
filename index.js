@@ -64,17 +64,32 @@ app.use(mongoSanitize());
 // Simplified Helmet configuration
 app.use(helmet({
   contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'", "http://195.179.231.102"],
-      scriptSrc: ["'self'", "http://195.179.231.102"],
-      styleSrc: ["'self'", "'unsafe-inline'", "http://195.179.231.102"],
-      imgSrc: ["'self'", "data:"],
-      connectSrc: ["'self'", "http://195.179.231.102", "ws:", "wss:"],
-      objectSrc: ["'none'"],
-    },
+      directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          // imgSrc: ["'self'", "data:", "blob:"],
+          imgSrc: ["'self'", "data:", "http://localhost:5000"],
+          connectSrc: ["'self'", "ws:", "wss:"],
+          objectSrc: ["'none'"],
+      },
   },
   crossOriginResourcePolicy: { policy: "cross-origin" },
 }));
+
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'", "http://195.179.231.102"],
+//       scriptSrc: ["'self'", "http://195.179.231.102"],
+//       styleSrc: ["'self'", "'unsafe-inline'", "http://195.179.231.102"],
+//       imgSrc: ["'self'", "data:"],
+//       connectSrc: ["'self'", "http://195.179.231.102", "ws:", "wss:"],
+//       objectSrc: ["'none'"],
+//     },
+//   },
+//   crossOriginResourcePolicy: { policy: "cross-origin" },
+// }));
 
 // ====== 5) Static Uploads Directory ======
 const storage = multer.diskStorage({
