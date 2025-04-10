@@ -152,7 +152,7 @@ exports.checkCustomer = async (req, res) => {
 
     if (!customer) {
       console.log('Customer not found with provided identifiers:', query);
-      return res.status(404).json({
+      return res.status(200).json({
         exists: false,
         message: 'Customer not found with the provided identifiers.',
       });

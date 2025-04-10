@@ -39,6 +39,7 @@ const authenticateToken = (req, res, next) => {
       agencyId: decoded.agencyId,
       country: decoded.country,
       profilePicture: decoded.profilePicture,
+      whatsappNumber: decoded.whatsappNumber,
     };
     console.log("User from token:", req.user); // Confirm user data is available
     next();

@@ -26,7 +26,7 @@ router.get('/propertyAd/:id', PropertyController.fetchPropertyAd);
 router.get('/user/:userId', PropertyController.fetchUserPropertiesWithInquiryType);
 router.get('/lead/user/:userId', PropertyController.fetchleads);
 router.patch('/updateStatus/:id', PropertyController.updatePropertyStatus);
-router.get('/findMatches/:propertyId', PropertyController.findMatches);
+router.post('/searchProperties', PropertyController.searchProperties);
 
 // Update property route with the default Multer configuration
 router.put(

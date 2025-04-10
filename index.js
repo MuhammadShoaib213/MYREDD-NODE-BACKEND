@@ -29,6 +29,7 @@ const addressRoutes = require('./routes/addressRoutes');
 const customerInviteRoutes = require('./routes/customerInviteRoutes');
 const placesRouter = require('./routes/places');
 const adminRoutes = require('./routes/adminRoutes');  
+const notificationRoutes = require('./routes/notification');
 
 const app = express();
 const server = http.createServer(app);
@@ -122,6 +123,7 @@ app.use('/api/address', addressRoutes);
 app.use('/api/CustomerInvites', customerInviteRoutes);
 app.use('/api/places', placesRouter);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Example route for neighborhoods (Google Maps API)
 app.get('/api/neighborhoods', async (req, res) => {

@@ -1,6 +1,219 @@
 const Property = require('../models/Property'); // Make sure this path is correct
 const Customer = require('../models/Customer'); 
 
+// exports.addProperty = async (req, res) => {
+//   try {
+//     // 1. Log uploaded files
+//     console.log('Uploaded files:', req.files);
+
+//     // 2. Log the raw body
+//     console.log('--- Raw req.body ---', req.body);
+
+//     // 3. Parse nested JSON fields where necessary
+//     const parsedBody = {};
+//     Object.entries(req.body).forEach(([key, value]) => {
+//       try {
+//         parsedBody[key] = JSON.parse(value);
+//       } catch (err) {
+//         parsedBody[key] = value;
+//       }
+//     });
+
+//     console.log('--- Parsed req.body ---', parsedBody);
+
+//     const {
+//       userId,
+//       cnicNumber,
+//       selectedCountry,
+//       city,
+//       district,
+//       phaseBlock,
+//       detectedAddress,
+//       size,
+//       sizeUnit,
+//       coveredWidth,
+//       coveredLength,
+//       coveredDepth,
+//       coveredUnit,
+//       landWidth,
+//       landLength,
+//       landDepth,
+//       landUnit,
+//       propertyNumber,
+//       streetName,
+//       Streetwidth,
+//       StreetwidthUnit,
+//       propertyCondition,
+//       demand,
+//       contractTerm,
+//       mainOption,
+//       areaSociety,
+//       inquiryType,
+//       propertyType,
+//       propertySubType,
+//       facilities,
+//       floors,
+//       budget,
+//       advancePayment, // Changed from advanceAmount
+//       priority,
+//       commission,
+//       addedValue,
+//     } = parsedBody;
+
+//     // 4. Validate required fields
+//     if (!cnicNumber) {
+//       return res.status(400).json({ message: 'CNIC number is required' });
+//     }
+
+//     // 5. Fetch the customer using the CNIC number
+//     const customer = await Customer.findOne({ cnicNumber });
+//     if (!customer) {
+//       return res.status(400).json({ message: 'Customer not found' });
+//     }
+
+//     // 6. Get the highest propertyNumber and increment it
+//     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
+//     const newPropertyNumber = lastProperty?.propertyNumber
+//       ? (parseInt(lastProperty.propertyNumber, 10) + 1).toString()
+//       : '1';
+
+//     // 7. Ensure customer.customerId exists; fallback to _id if undefined
+//     const customerId = customer.customerId || customer._id.toString();
+
+//     // 8. Create the property code
+//     const propertyCode = `${customerId}${newPropertyNumber}`;
+
+//     // 9. Transform `facilities` into an array of { name, value }
+//     const transformedFacilities = Array.isArray(facilities)
+//       ? facilities.map((facility) => ({
+//           name: facility.name?.trim() || 'Unknown',
+//           value: ['Y', 'N'].includes(facility.value) ? facility.value : 'N',
+//         }))
+//       : [];
+
+//     // 10. Transform `floors` into an array of { name, features }
+//     const transformedFloors = Array.isArray(floors)
+//       ? floors.map((floor) => ({
+//           name: floor.name?.trim() || 'Unnamed Floor',
+//           features: floor.features
+//             ? Object.fromEntries(
+//                 Object.entries(floor.features).map(([featureName, featureValue]) => [
+//                   featureName?.trim() || 'Unnamed Feature',
+//                   Number(featureValue) || 0,
+//                 ])
+//               )
+//             : {},
+//         }))
+//       : [];
+
+//     // 11. Transform budget, commission, and addedValue
+//     const transformedBudget = {
+//       min: budget?.min ? Number(budget.min) : 0,
+//       max: budget?.max ? Number(budget.max) : 0,
+//     };
+
+//     const transformedCommission = {
+//       type: ['percentage', 'fixed'].includes(commission?.type) ? commission.type : 'percentage',
+//       value: commission?.value ? Number(commission.value) : 0,
+//     };
+
+//     const transformedAddedValue = {
+//       type: ['percentage', 'fixed'].includes(addedValue?.type) ? addedValue.type : 'percentage',
+//       value: addedValue?.value ? Number(addedValue.value) : 0,
+//     };
+
+//     // 12. Handle file uploads
+//     const frontPictures = req.files?.frontPictures?.map((file) => file.path) || [];
+//     const propertyPictures = req.files?.propertyPictures?.map((file) => file.path) || [];
+//     const images = [...frontPictures, ...propertyPictures];
+//     const video = req.files?.video?.[0]?.path || '';
+
+//     // 13. Prepare the new property data
+//     const newPropertyData = {
+//       userId, // Reference to the user
+//       cnicNumber,
+//       selectedCountry,
+//       city,
+//       district,
+//       phaseBlock,
+//       detectedAddress,
+//       size: size ? Number(size) : 0,
+//       sizeUnit,
+//       coveredWidth: coveredWidth ? Number(coveredWidth) : 0,
+//       coveredLength: coveredLength ? Number(coveredLength) : 0,
+//       coveredDepth: coveredDepth ? Number(coveredDepth) : 0,
+//       coveredUnit,
+//       landWidth: landWidth ? Number(landWidth) : 0,
+//       landLength: landLength ? Number(landLength) : 0,
+//       landDepth: landDepth ? Number(landDepth) : 0,
+//       landUnit,
+//       propertyNumber,
+//       streetName,
+//       Streetwidth: Streetwidth ? Number(Streetwidth) : 0,
+//       StreetwidthUnit,
+//       propertyCondition,
+//       demand: demand ? Number(demand) : 0,
+//       contractTerm, // Added contractTerm
+//       mainOption,
+//       areaSociety, // Ensure frontend sends this or handle accordingly
+//       inquiryType,
+//       propertyType,
+//       propertySubType,
+//       facilities: transformedFacilities,
+//       floors: transformedFloors,
+//       budget: transformedBudget,
+//       advancePayment: advancePayment ? Number(advancePayment) : 0, // Changed from advanceAmount
+//       priority,
+//       commission: transformedCommission,
+//       addedValue: transformedAddedValue,
+//       frontPictures,
+//       propertyPictures,
+//       video,
+//       propertyCode,
+//       status: 'New',
+//     };
+
+//     // 14. Create and save the property
+//     const newProperty = new Property(newPropertyData);
+//     await newProperty.save();
+
+//     // 15. Return success response
+//     res.status(201).json({
+//       message: 'Property added successfully',
+//       propertyId: newProperty._id,
+//       propertyCode,
+//     });
+//   } catch (error) {
+//     console.error('Error adding property:', error);
+
+//     // Handle validation errors explicitly
+//     if (error.name === 'ValidationError') {
+//       return res.status(400).json({
+//         message: 'Validation error occurred',
+//         errors: Object.keys(error.errors).map((key) => ({
+//           field: key,
+//           message: error.errors[key].message,
+//         })),
+//       });
+//     }
+
+//     // Handle MongoDB unique key errors
+//     if (error.code === 11000) {
+//       return res.status(400).json({
+//         message: 'Duplicate key error',
+//         details: error.keyValue,
+//       });
+//     }
+
+//     // General error handling
+//     res.status(500).json({
+//       message: 'An unexpected error occurred while adding the property',
+//       error: error.message,
+//     });
+//   }
+// };
+
+
 exports.addProperty = async (req, res) => {
   try {
     // 1. Log uploaded files
@@ -54,7 +267,7 @@ exports.addProperty = async (req, res) => {
       facilities,
       floors,
       budget,
-      advancePayment, // Changed from advanceAmount
+      advancePayment, // Changed from advanceAmount for consistency
       priority,
       commission,
       addedValue,
@@ -73,9 +286,14 @@ exports.addProperty = async (req, res) => {
 
     // 6. Get the highest propertyNumber and increment it
     const lastProperty = await Property.findOne().sort({ propertyNumber: -1 }).exec();
-    const newPropertyNumber = lastProperty?.propertyNumber
-      ? (parseInt(lastProperty.propertyNumber, 10) + 1).toString()
-      : '1';
+    let newPropertyNumber;
+    if (lastProperty && lastProperty.propertyNumber) {
+      const lastNum = parseInt(lastProperty.propertyNumber, 10);
+      // If parsing fails (NaN) then start with '1', otherwise increment
+      newPropertyNumber = isNaN(lastNum) ? '1' : (lastNum + 1).toString();
+    } else {
+      newPropertyNumber = '1';
+    }
 
     // 7. Ensure customer.customerId exists; fallback to _id if undefined
     const customerId = customer.customerId || customer._id.toString();
@@ -113,12 +331,16 @@ exports.addProperty = async (req, res) => {
     };
 
     const transformedCommission = {
-      type: ['percentage', 'fixed'].includes(commission?.type) ? commission.type : 'percentage',
+      type: ['percentage', 'fixed'].includes(commission?.type)
+        ? commission.type
+        : 'percentage',
       value: commission?.value ? Number(commission.value) : 0,
     };
 
     const transformedAddedValue = {
-      type: ['percentage', 'fixed'].includes(addedValue?.type) ? addedValue.type : 'percentage',
+      type: ['percentage', 'fixed'].includes(addedValue?.type)
+        ? addedValue.type
+        : 'percentage',
       value: addedValue?.value ? Number(addedValue.value) : 0,
     };
 
@@ -130,7 +352,7 @@ exports.addProperty = async (req, res) => {
 
     // 13. Prepare the new property data
     const newPropertyData = {
-      userId, // Reference to the user
+      userId,
       cnicNumber,
       selectedCountry,
       city,
@@ -153,16 +375,16 @@ exports.addProperty = async (req, res) => {
       StreetwidthUnit,
       propertyCondition,
       demand: demand ? Number(demand) : 0,
-      contractTerm, // Added contractTerm
+      contractTerm,
       mainOption,
-      areaSociety, // Ensure frontend sends this or handle accordingly
+      areaSociety,
       inquiryType,
       propertyType,
       propertySubType,
       facilities: transformedFacilities,
       floors: transformedFloors,
       budget: transformedBudget,
-      advancePayment: advancePayment ? Number(advancePayment) : 0, // Changed from advanceAmount
+      advancePayment: advancePayment ? Number(advancePayment) : 0,
       priority,
       commission: transformedCommission,
       addedValue: transformedAddedValue,
@@ -463,58 +685,58 @@ exports.updatePropertyStatus = async (req, res) => {
 };
 
 
-// Helper function to determine the opposite inquiry type
-function getOppositeInquiryType(inquiryType) {
-  const mappings = {
-    forSale: 'forPurchase',
-    forPurchase: 'forSale',
-    forRent: 'onRent',
-    onRent: 'forRent'
-  };
+// // Helper function to determine the opposite inquiry type
+// function getOppositeInquiryType(inquiryType) {
+//   const mappings = {
+//     forSale: 'forPurchase',
+//     forPurchase: 'forSale',
+//     forRent: 'onRent',
+//     onRent: 'forRent'
+//   };
 
-  return mappings[inquiryType] || null;
-}
+//   return mappings[inquiryType] || null;
+// }
 
-// Function to find matches for a property
-exports.findMatches = async (req, res) => {
-  try {
-    const { propertyId } = req.params;
-    const property = await Property.findById(propertyId);
+// // Function to find matches for a property
+// exports.findMatches = async (req, res) => {
+//   try {
+//     const { propertyId } = req.params;
+//     const property = await Property.findById(propertyId);
     
-    if (!property) {
-      return res.status(404).json({ message: "Property not found" });
-    }
+//     if (!property) {
+//       return res.status(404).json({ message: "Property not found" });
+//     }
 
-    const oppositeInquiryType = getOppositeInquiryType(property.inquiryType);
+//     const oppositeInquiryType = getOppositeInquiryType(property.inquiryType);
     
-    if (!oppositeInquiryType) {
-      return res.status(400).json({ message: "Invalid inquiry type for matching" });
-    }
+//     if (!oppositeInquiryType) {
+//       return res.status(400).json({ message: "Invalid inquiry type for matching" });
+//     }
     
-    const matches = await Property.find({ 
-      inquiryType: oppositeInquiryType,
-      propertyType: property.propertyType,
-      propertySubType: property.propertySubType,
-      area: property.area,
-      city: property.city
-    });
+//     const matches = await Property.find({ 
+//       inquiryType: oppositeInquiryType,
+//       propertyType: property.propertyType,
+//       propertySubType: property.propertySubType,
+//       area: property.area,
+//       city: property.city
+//     });
 
-    res.status(200).json(matches);
-  } catch (error) {
-    console.error('Failed to find matches:', error);
-    res.status(500).json({ message: "Failed to process request", error: error.message });
-  }
-};
+//     res.status(200).json(matches);
+//   } catch (error) {
+//     console.error('Failed to find matches:', error);
+//     res.status(500).json({ message: "Failed to process request", error: error.message });
+//   }
+// };
 
 
-// Helper function to parse JSON fields
-const parseJSON = (data) => {
-  try {
-    return JSON.parse(data);
-  } catch (e) {
-    return data; // Return as-is if parsing fails
-  }
-};
+// // Helper function to parse JSON fields
+// const parseJSON = (data) => {
+//   try {
+//     return JSON.parse(data);
+//   } catch (e) {
+//     return data; // Return as-is if parsing fails
+//   }
+// };
 
 // Update Property Controller
 exports.updateProperty = async (req, res) => {
@@ -702,5 +924,92 @@ exports.updateProperty = async (req, res) => {
   } catch (error) {
     console.error('Error updating property:', error);
     res.status(500).json({ message: "Failed to update property", error: error.message });
+  }
+};
+
+exports.getOppositeInquiryType = (inquiryType) => {
+  switch (inquiryType) {
+    case 'For Sale':
+      return 'For Purchase';
+    case 'For Purchase':
+      return 'For Sale';
+    case 'For Rent':
+      return 'On Rent';
+    case 'On Rent':
+      return 'For Rent';
+    default:
+      return null; // Or throw an error if you prefer
+  }
+};
+
+exports.searchProperties = async (req, res) => {
+  try {
+    // 1. Extract search criteria from body or query
+    const {
+      userId,
+      inquiryType,
+      propertyType,
+      propertySubType,
+      city,
+      district,
+      phaseBlock,
+      minDemand,
+      maxDemand
+    } = req.body;
+
+    // Validate required fields
+    if (!userId || !inquiryType) {
+      return res.status(400).json({
+        message: "userId and inquiryType are required"
+      });
+    }
+
+    // 2. Compute the opposite inquiry type using the exported function
+    const oppositeInquiryType = exports.getOppositeInquiryType(inquiryType);
+    if (!oppositeInquiryType) {
+      return res.status(400).json({
+        message: `Invalid inquiryType: ${inquiryType}. No opposite type found.`
+      });
+    }
+
+    // 3. Start building the Mongoose query
+    const query = {
+      userId: userId,
+      inquiryType: oppositeInquiryType
+    };
+
+    // 4. Add optional matching fields
+    if (propertyType) {
+      query.propertyType = propertyType;
+    }
+    if (propertySubType) {
+      query.propertySubType = propertySubType;
+    }
+    if (city) {
+      query.city = city;
+    }
+    if (district) {
+      query.district = district;
+    }
+    if (phaseBlock) {
+      query.phaseBlock = phaseBlock;
+    }
+
+    // Add demand range if provided
+    if (minDemand && maxDemand) {
+      query.demand = { $gte: Number(minDemand), $lte: Number(maxDemand) };
+    }
+
+    console.log('searchProperties - Final query:', query);
+
+    // 5. Fetch matching properties
+    const matches = await Property.find(query);
+    res.status(200).json(matches);
+  } catch (error) {
+    console.error('Error in searchProperties:', error);
+    res.status(500).json({
+      message: 'Failed to search properties',
+      error: error.message
+    });
   }
 };

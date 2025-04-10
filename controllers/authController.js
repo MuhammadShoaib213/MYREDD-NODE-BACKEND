@@ -97,6 +97,7 @@ exports.login = async (req, res) => {
           agencyId: user.agencyId, 
           country: user.country,
           profilePicture: user.profilePicture, 
+          whatsappNumber: user.whatsappNumber,
       },
       SECRET_KEY,
       { expiresIn: '12h' }
