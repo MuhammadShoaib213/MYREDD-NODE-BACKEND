@@ -104,8 +104,8 @@ exports.getFriendsList = async (req, res) => {
           { recipient: userId, status: 'accepted' }
         ]
       })
-      .populate('requester', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city') // Updated to include more details
-      .populate('recipient', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city') // Updated to include more details
+      .populate('requester', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city country') // Updated to include more details
+      .populate('recipient', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city country') // Updated to include more details
       .exec();
   
       const results = friends.map(friend => {
