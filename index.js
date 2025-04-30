@@ -148,7 +148,7 @@ app.post('/api/upload', upload.single('file'), (req, res) => {
 /* ────────────────────────────────────────────────────────── */
 /* 5) Stripe checkout & webhook                               */
 /* ────────────────────────────────────────────────────────── */
-app.post('/create-checkout-session', async (req, res) => {
+app.post('/api/create-checkout-session', async (req, res) => {
   const { quantity = 1, leadId } = req.body;
   if (!leadId) return res.status(400).json({ error: 'Missing leadId' });
 
@@ -179,7 +179,7 @@ app.post('/create-checkout-session', async (req, res) => {
   }
 });
 
-app.get('/verify-checkout-session', async (req, res) => {
+app.get('/api/verify-checkout-session', async (req, res) => {
   const { sessionId } = req.query;
   if (!sessionId) return res.status(400).json({ error: 'Missing sessionId' });
 
