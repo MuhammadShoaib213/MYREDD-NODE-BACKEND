@@ -336,11 +336,25 @@ exports.shareLead = async (req, res) => {
     });
 
     // fire notifications
+    // await Promise.all(
+    //   recipients.map(rid =>
+    //     Notification.create({
+    //       userId: rid,
+    //       message: `${user.firstName} shared a ${property.inquiryType} (Code: ${property.propertyCode}) lead with you!`
+    //     })
+    //   )
+    // );
+
     await Promise.all(
       recipients.map(rid =>
         Notification.create({
           userId: rid,
-          message: `${user.firstName} shared a ${property.inquiryType} (Code: ${property.propertyCode}) lead with you!`
+          message: `${user.firstName} shared a ${property.inquiryType} (Code: ${property.propertyCode}) lead with you!`,
+          type: 'inquiry_shared',
+          metadata: {
+            inquiryId: sharedLead._id,
+            sharedById: userId
+          }
         })
       )
     );
@@ -532,9 +546,20 @@ exports.updateReceivedStatus = async (req, res) => {
   if (!lead) return res.status(404).json({ message: 'Lead not found.' });
 
   // notify sharer
+  // await Notification.create({
+  //   userId: lead.sharedBy._id,
+  //   message: `${req.user.firstName} ${req.user.lastName} ${status.toLowerCase()} your Inquiry ${lead.leadId}`
+  // });
+
   await Notification.create({
     userId: lead.sharedBy._id,
-    message: `${req.user.firstName} ${req.user.lastName} ${status.toLowerCase()} your lead ${lead.leadId}`
+    message: `${req.user.firstName} ${req.user.lastName} ${status.toLowerCase()} your Inquiry ${lead.leadId}`,
+    type: 'inquiry_accepted',
+    metadata: {
+      inquiryId: lead.id,
+      acceptedById: userId,
+      status: status
+    }
   });
 
   res.json({ message: `Marked as ${status}.` });
