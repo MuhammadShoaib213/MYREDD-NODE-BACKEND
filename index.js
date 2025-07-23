@@ -172,7 +172,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
       metadata   : { leadId, quantity: quantity.toString() },
     });
 
-    res.json({ sessionId: session.id });
+    // res.json({ sessionId: session.id });
+     res.json({
+     sessionId: session.id,   // existing field (kept for compatibility)
+    url      : session.url   // <-- add this line
+    });
   } catch (err) {
     console.error('Stripe error creating session:', err);
     res.status(500).json({ error: err.raw?.message || err.message });
