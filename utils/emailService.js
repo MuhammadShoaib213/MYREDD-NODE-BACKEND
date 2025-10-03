@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 // Configure the transporter
 const transporter = nodemailer.createTransport({
   host: 'smtp.hostinger.com', // SMTP Host
-  port: 587, // SMTP Port (commonly 587 for secure connection)
+  port: 465, // SMTP Port (commonly 587 for secure connection)
   secure: true, // true for 465, false for other ports
   auth: {
     user: process.env.OTP_SMTP_USER, // SMTP username
@@ -16,7 +16,7 @@ const transporter = nodemailer.createTransport({
 
 exports.sendEmail = (to, body, subject) => {
   const mailOptions = {
-    from: 'otpverification@myredd.net', // sender address must be the same as the authenticated user
+    from: 'otp@myredd.net', // sender address must be the same as the authenticated user
     to: to,
     subject: subject,
     text: body
