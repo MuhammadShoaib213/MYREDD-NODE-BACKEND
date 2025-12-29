@@ -233,7 +233,7 @@ exports.sendOtp = async (req, res) => {
 // Function to verify OTP
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('+otp +otp_expiration');
 
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
