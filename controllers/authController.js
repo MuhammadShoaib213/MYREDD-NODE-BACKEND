@@ -254,12 +254,17 @@ exports.verifyOtp = async (req, res) => {
   res.json({ message: 'Email verified successfully!' });
 };
 
-const normalizeUploadPath = (value) => {
+const normalizeUploadPath = (req, value) => {
   if (!value) return value;
   if (typeof value !== 'string') return value;
   if (value.startsWith('http://') || value.startsWith('https://')) return value;
   const filename = path.basename(value);
-  return `/uploads/${filename}`;
+  const relative = value.startsWith('/uploads/')
+    ? value
+    : `/uploads/${filename}`;
+  if (!req) return relative;
+  const base = `${req.protocol}://${req.get('host')}`;
+  return encodeURI(`${base}${relative}`);
 };
 
 
@@ -286,10 +291,10 @@ exports.getProfile = async (req, res) => {
       phoneNumber: user.phoneNumber || defaultEmptyValue,
       whatsappNumber: user.whatsappNumber || defaultEmptyValue,
       profilePicture:
-        normalizeUploadPath(user.profilePicture) ||
+        normalizeUploadPath(req, user.profilePicture) ||
         "https://via.placeholder.com/150",
       businessLogo:
-        normalizeUploadPath(user.businessLogo) ||
+        normalizeUploadPath(req, user.businessLogo) ||
         "https://via.placeholder.com/150",
       country: user.country || defaultEmptyValue,
       city: user.city || defaultEmptyValue,
@@ -402,8 +407,8 @@ exports.updateProfile = async (req, res) => {
 
     // Calculate the profile completion after update
     const profileCompletion = calculateProfileCompletion(user);
-    user.profilePicture = normalizeUploadPath(user.profilePicture);
-    user.businessLogo = normalizeUploadPath(user.businessLogo);
+    user.profilePicture = normalizeUploadPath(req, user.profilePicture);
+    user.businessLogo = normalizeUploadPath(req, user.businessLogo);
 
     // Update the profile completion in the database
     await User.findByIdAndUpdate(userId, { profileCompletion });
