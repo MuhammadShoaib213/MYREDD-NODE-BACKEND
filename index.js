@@ -62,16 +62,18 @@ app.use((req, res, next) => {
 });
 
 app.use(express.urlencoded({ extended: true }));
+const normalizeOrigin = (value) => value.replace(/\/+$/, '');
 const corsOrigins = (process.env.CORS_ORIGINS || process.env.CLIENT_URL || '')
   .split(',')
-  .map(v => v.trim())
+  .map(v => normalizeOrigin(v.trim()))
   .filter(Boolean);
 
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true);
+    const normalizedOrigin = normalizeOrigin(origin);
     if (corsOrigins.length === 0) return cb(new Error('CORS not configured'));
-    if (corsOrigins.includes(origin)) return cb(null, true);
+    if (corsOrigins.includes(normalizedOrigin)) return cb(null, true);
     return cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
