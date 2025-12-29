@@ -4,6 +4,7 @@ const SECRET_KEY = process.env.JWT_SECRET;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/emailService'); // Adjust the path as necessary
+const path = require('path');
 const twilio = require('twilio');
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
@@ -253,6 +254,14 @@ exports.verifyOtp = async (req, res) => {
   res.json({ message: 'Email verified successfully!' });
 };
 
+const normalizeUploadPath = (value) => {
+  if (!value) return value;
+  if (typeof value !== 'string') return value;
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const filename = path.basename(value);
+  return `/uploads/${filename}`;
+};
+
 
 exports.getProfile = async (req, res) => {
   const userId = req.params.id;
@@ -276,8 +285,12 @@ exports.getProfile = async (req, res) => {
       email: user.email || defaultEmptyValue,
       phoneNumber: user.phoneNumber || defaultEmptyValue,
       whatsappNumber: user.whatsappNumber || defaultEmptyValue,
-      profilePicture: user.profilePicture || "https://via.placeholder.com/150",
-      businessLogo: user.businessLogo || "https://via.placeholder.com/150",
+      profilePicture:
+        normalizeUploadPath(user.profilePicture) ||
+        "https://via.placeholder.com/150",
+      businessLogo:
+        normalizeUploadPath(user.businessLogo) ||
+        "https://via.placeholder.com/150",
       country: user.country || defaultEmptyValue,
       city: user.city || defaultEmptyValue,
       location: user.location || defaultEmptyValue,
@@ -371,10 +384,14 @@ exports.updateProfile = async (req, res) => {
 
   // Add image URLs if files were uploaded
   if (req.files?.['profilePicture']) {
-    updates.profilePicture = req.files['profilePicture'][0].path;
+    const file = req.files['profilePicture'][0];
+    const filename = file.filename || path.basename(file.path);
+    updates.profilePicture = `/uploads/${filename}`;
   }
   if (req.files?.['businessLogo']) {
-    updates.businessLogo = req.files['businessLogo'][0].path;
+    const file = req.files['businessLogo'][0];
+    const filename = file.filename || path.basename(file.path);
+    updates.businessLogo = `/uploads/${filename}`;
   }
 
   try {
@@ -385,6 +402,8 @@ exports.updateProfile = async (req, res) => {
 
     // Calculate the profile completion after update
     const profileCompletion = calculateProfileCompletion(user);
+    user.profilePicture = normalizeUploadPath(user.profilePicture);
+    user.businessLogo = normalizeUploadPath(user.businessLogo);
 
     // Update the profile completion in the database
     await User.findByIdAndUpdate(userId, { profileCompletion });
