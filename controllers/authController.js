@@ -208,7 +208,7 @@ exports.deleteAgent = async (req, res) => {
 // Function to send OTP
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email }).select('+otp +otp_expiration');
   
   if (!user) {
     return res.status(404).json({ message: 'User not found' });
@@ -463,7 +463,9 @@ exports.verifyOtpPass = async (req, res) => {
   const { email, passOtp } = req.body;
   
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select(
+      '+passOtp +passOtpExpiration',
+    );
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
