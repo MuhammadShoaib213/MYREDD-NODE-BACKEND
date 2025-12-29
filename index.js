@@ -19,6 +19,7 @@ const { limiter } = require('./middleware/rateLimiter');
 /* 1) core app + socket.io                                    */
 /* ────────────────────────────────────────────────────────── */
 const app    = express();          // declare app **before** server
+app.set('trust proxy', 1);
 const server = http.createServer(app);
 const io     = require('./sockets')(server);   // returns shared instance
 const requiredEnvVars = [
