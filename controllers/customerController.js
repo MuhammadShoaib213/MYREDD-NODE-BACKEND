@@ -1,14 +1,21 @@
 const Customer = require('../models/Customer');
 const multer = require('multer');
 const InviteToken = require('../models/InviteToken');
+const path = require('path');
 
 // Set up multer for file storage
+const sanitizeFilename = (filename) => {
+  const basename = path.basename(filename);
+  return basename.replace(/[^a-zA-Z0-9.-_]/g, '_').substring(0, 100);
+};
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, './uploads/');
   },
   filename: (req, file, cb) => {
-    cb(null, new Date().toISOString().replace(/:/g, '-') + file.originalname);
+    const safeName = sanitizeFilename(file.originalname);
+    cb(null, `${new Date().toISOString().replace(/:/g, '-')}-${safeName}`);
   }
 });
 
@@ -25,7 +32,7 @@ const upload = multer({ storage: storage, fileFilter: fileFilter });
 // Controller to handle fetching customers
 exports.getCustomers = async (req, res) => {
   try {
-    const userId = req.query.userId;
+    const userId = req.user.id;
     console.log(`Fetching customers for user ID: ${userId}`);
     const customers = await Customer.find({ userId: userId });
     console.log(`Customers retrieved: ${customers.length} found`);
@@ -40,12 +47,12 @@ exports.addCustomer = async (req, res) => {
   console.log('Received request:', req.body);
   console.log('File details:', req.file);
 
-  const { userId, cnicNumber, inviteToken } = req.body;
-  let actualUserId = userId;
+  const { cnicNumber, inviteToken } = req.body;
+  let actualUserId = req.user?.id;
 
   try {
     // If userId is not provided and inviteToken is provided, find the inviter's userId
-    if (!userId && inviteToken) {
+    if (!actualUserId && inviteToken) {
       const invite = await InviteToken.findOne({ token: inviteToken });
       if (invite) {
         actualUserId = invite.inviter.toString(); // Assign inviter's userId
@@ -129,7 +136,8 @@ exports.addCustomer = async (req, res) => {
 
 /// Controller to check customer details
 exports.checkCustomer = async (req, res) => {
-  const { cnicNumber, phoneNumber, userId } = req.query;
+  const { cnicNumber, phoneNumber } = req.query;
+  const userId = req.user.id;
   console.log(
     `Checking customer with CNIC: ${cnicNumber}, Phone: ${phoneNumber}, userId: ${userId}`
   );
@@ -191,7 +199,7 @@ exports.checkCustomer = async (req, res) => {
 exports.getCustomerDetail = async (req, res) => {
   try {
     console.log(`Fetching customer detail for ID: ${req.params.id}`);
-    const customer = await Customer.findById(req.params.id);
+    const customer = await Customer.findOne({ _id: req.params.id, userId: req.user.id });
     if (!customer) {
       console.log('Customer not found:', req.params.id);
       return res.status(404).json({ message: 'Customer not found' });

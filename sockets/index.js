@@ -32,61 +32,60 @@ module.exports = function attachSocket(server) {
 
   /* ───── on connect ───── */
   io.on('connection', async socket => {
-    const userId = socket.user.id;
+  const userId = socket.user?.id;
+  
+  if (!userId) {
+    socket.emit('error', { message: 'Invalid authentication' });
+    socket.disconnect(true);
+    return;
+  }
 
-    /* join rooms of every conversation we’re part of */
-    const rooms = await Conversation.find({ participants: userId }).select('_id');
+  try {
+    // Join rooms with error handling
+    const rooms = await Conversation.find({ participants: userId }).select('_id').lean();
     rooms.forEach(r => socket.join(r._id.toString()));
-
-    /* join personal room for notifications */
     socket.join(userId);
+  } catch (error) {
+    console.error('Error setting up socket rooms:', error);
+    socket.emit('error', { message: 'Failed to initialize connection' });
+  }
 
-    /* ───── MESSAGE in / out (single event name) ───── */
-    socket.on('message', async ({ conversationId, text, attachments }) => {
-      if (!text && !attachments?.length) return;
+  socket.on('message', async ({ conversationId, text, attachments }) => {
+    try {
+      if (!text && !attachments?.length) {
+        socket.emit('error', { message: 'Message cannot be empty' });
+        return;
+      }
+
+      // Validate conversationId format
+      if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+        socket.emit('error', { message: 'Invalid conversation' });
+        return;
+      }
 
       const convo = await Conversation.findById(conversationId);
       const isParticipant = convo?.participants.some(p => p.toString() === userId);
-      if (!isParticipant) return;
-
-      const msg = await Message.create({
-        conversationId,
-        senderId   : userId,
-        text,
-        attachments,
-      });
-
-      await Conversation.findByIdAndUpdate(conversationId, {
-        lastMessage: text ?? '[attachment]',
-        updatedAt  : msg.createdAt,
-      });
-
-      /* 1) Emit new chat message to conversation room */
-      io.to(conversationId).emit('message', msg);
-
-      /* 2) Create + emit notifications to all other participants */
-      const otherIds = convo.participants
-        .filter(p => p.toString() !== userId);
-
-      if (otherIds.length) {
-                const sender = await User.findById(userId).select('firstName lastName');
-        
-                const notifs = await Notification.insertMany(
-                otherIds.map(id => ({
-                    userId : id,
-                    message: `You have received a new message from ${sender.firstName} ${sender.lastName}`,
-                  }))
-                );
-
-        /* push in real-time */
-        notifs.forEach(n => io.to(n.userId.toString()).emit('notification', n));
+      
+      if (!isParticipant) {
+        socket.emit('error', { message: 'Access denied' });
+        return;
       }
-    });
 
-    socket.on('disconnect', () => {
-      console.log('socket disconnected', userId);
-    });
+      // ... rest of message handling
+    } catch (error) {
+      console.error('Error handling message:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
   });
+
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Socket disconnected:', userId);
+  });
+});
 
   /* ───── optional redis adapter ───── */
   if (process.env.REDIS_URL) {

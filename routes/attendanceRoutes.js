@@ -4,12 +4,15 @@ const { punchIn, punchOut } = require('../controllers/attendanceController');
 const { authenticateToken } = require('../middleware/verifyToken');
 const Attendance = require('../models/attendance');
 
-router.post('/punch-in',  punchIn);
-router.post('/punch-out',  punchOut);
+router.post('/punch-in', authenticateToken, punchIn);
+router.post('/punch-out', authenticateToken, punchOut);
 
-router.get('/agency/:agencyId', async (req, res) => {
+router.get('/agency/:agencyId', authenticateToken, async (req, res) => {
     try {
         const { agencyId } = req.params;
+        if (req.user.role !== 'admin' && req.user.agencyId !== agencyId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
         const attendanceRecords = await Attendance.find({ agencyId: agencyId }).populate('userId', 'name'); // Populating 'userId' to get user details, adjust fields as necessary
 
         if (!attendanceRecords) {

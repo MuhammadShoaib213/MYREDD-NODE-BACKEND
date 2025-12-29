@@ -3,7 +3,8 @@ const Customer = require('../models/Customer');
 
 // Add a new schedule
 exports.addSchedule = async (req, res) => {
-    const { userId, propertyId, customerId, scheduleType, time, date } = req.body;
+    const { propertyId, customerId, scheduleType, time, date } = req.body;
+    const userId = req.user.id;
     try {
         const newSchedule = new Schedule({ userId, propertyId, customerId, scheduleType, time, date });
         await newSchedule.save();
@@ -16,6 +17,9 @@ exports.addSchedule = async (req, res) => {
 // Get schedules by user ID
 exports.getSchedulesByUser = async (req, res) => {
     const { userId } = req.params;
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+    }
     try {
         const schedules = await Schedule.find({ userId }).populate('propertyId').populate('customerId');
         res.status(200).json(schedules);
@@ -28,6 +32,9 @@ exports.getSchedulesByUser = async (req, res) => {
 exports.fetchSchedulesByUserId = async (req, res) => {
     try {
         const userId = req.params.userId;
+        if (req.user.role !== 'admin' && req.user.id !== userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
         const schedules = await Schedule.find({ userId: userId })
             .populate({
                 path: 'customerId', // Assuming customerId is the reference in Schedule schema

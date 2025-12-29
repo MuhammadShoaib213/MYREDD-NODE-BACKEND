@@ -3,12 +3,16 @@ const router = express.Router();
 const subscriptionController = require('../controllers/subscriptionController');
 const Subscription = require('../models/Subscription');
 const Property = require('../models/Property');
+const { authenticateToken } = require('../middleware/verifyToken');
 
 
-router.post('/subscriptions', subscriptionController.addSubscription);
+router.post('/subscriptions', authenticateToken, subscriptionController.addSubscription);
 
-router.get('/subscriptions/check-limit/:userId', async (req, res) => {
+router.get('/subscriptions/check-limit/:userId', authenticateToken, async (req, res) => {
     const { userId } = req.params;
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+        return res.status(403).json({ message: 'Access denied' });
+    }
     try {
         const subscription = await Subscription.findOne({ userId });
         const propertiesCount = await Property.countDocuments({ userId });

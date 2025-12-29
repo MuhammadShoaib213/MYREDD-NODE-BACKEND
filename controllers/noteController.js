@@ -35,6 +35,10 @@ exports.getNotesByUserPropertyCustomer = async (req, res) => {
     if (!userId || !propertyId || !customerId) {
       return res.status(400).json({ message: "All parameters are required: userId, propertyId, and customerId" });
     }
+
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
   
     try {
       const notes = await Note.find({ userId, propertyId, customerId }).populate('userId propertyId customerId');
@@ -52,7 +56,7 @@ exports.getNotesByUserPropertyCustomer = async (req, res) => {
     const { id } = req.params; // ID of the note to delete
 
     try {
-        const note = await Note.findByIdAndDelete(id);
+        const note = await Note.findOneAndDelete({ _id: id, userId: req.user.id });
         if (!note) {
             return res.status(404).json({ message: 'Note not found' });
         }

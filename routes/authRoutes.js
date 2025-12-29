@@ -40,7 +40,7 @@ router.get('/search', authenticateToken, authController.searchUsers);
 router.post('/forgot-password',  limiter, authController.forgotPassword);
 
 // Route to verify OTP
-router.post('/verify-otp-pass', authController.verifyOtpPass);
+router.post('/verify-otp-pass', limiter, authController.verifyOtpPass);
 
 // Route for resetting password
 router.post('/reset-password',  limiter, authController.resetPassword);

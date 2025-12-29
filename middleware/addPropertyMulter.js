@@ -1,14 +1,25 @@
 const multer = require('multer');
 const path = require('path');
 
-// Define storage configuration
+const sanitizeFilename = (filename) => {
+  // Remove directory paths, keep only filename
+  const basename = path.basename(filename);
+  // Remove special characters, keep only alphanumeric, dots, hyphens, underscores
+  return basename.replace(/[^a-zA-Z0-9.-_]/g, '_').substring(0, 100);
+};
+
 const addPropertyStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/properties/'); // Ensure this directory exists
+    const uploadDir = './uploads/properties/';
+    // Ensure directory exists
+    require('fs').mkdirSync(uploadDir, { recursive: true });
+    cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    cb(null, `${uniqueSuffix}-${file.originalname}`);
+    const ext = path.extname(file.originalname).toLowerCase();
+    const safeName = sanitizeFilename(path.basename(file.originalname, ext));
+    cb(null, `${uniqueSuffix}-${safeName}${ext}`);
   },
 });
 

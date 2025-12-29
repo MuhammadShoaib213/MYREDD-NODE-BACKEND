@@ -3,7 +3,14 @@ const Attendance = require('../models/attendance');
 exports.punchIn = async (req, res) => {
   try {
     console.log('Attempting to punch in:', req.body);
-    const { userId, location, agencyId } = req.body;
+    const { location } = req.body;
+    const userId = req.user.id;
+    const agencyId = req.user.agencyId || req.body.agencyId;
+
+    if (!agencyId) {
+      return res.status(400).json({ message: 'Agency ID is required' });
+    }
+
     const newRecord = await Attendance.create({
       userId,
       punchIn: new Date(),
@@ -21,7 +28,13 @@ exports.punchIn = async (req, res) => {
 exports.punchOut = async (req, res) => {
   try {
     console.log('Attempting to punch out:', req.body);
-    const { userId, agencyId } = req.body;
+    const userId = req.user.id;
+    const agencyId = req.user.agencyId || req.body.agencyId;
+
+    if (!agencyId) {
+      return res.status(400).json({ message: 'Agency ID is required' });
+    }
+
     const record = await Attendance.findOneAndUpdate(
       { userId, agencyId, punchOut: { $exists: false } },
       { punchOut: new Date() },

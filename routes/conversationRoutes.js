@@ -42,6 +42,21 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/messages/:conversationId', authenticateToken, async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation' });
+    }
+
+    const convo = await Conversation.findById(conversationId).select('participants');
+    if (!convo) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const isParticipant = convo.participants.some(p => p.toString() === userId);
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     const msgs = await Message.find({ conversationId })
       .sort({ createdAt: 1 })                         // oldest-first
@@ -108,6 +123,20 @@ router.post('/:conversationId/messages', authenticateToken, async (req, res) => 
     const { conversationId } = req.params;
     const { text } = req.body;
     const userId  = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+      return res.status(400).json({ error: 'Invalid conversation' });
+    }
+
+    const convo = await Conversation.findById(conversationId).select('participants');
+    if (!convo) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const isParticipant = convo.participants.some(p => p.toString() === userId);
+    if (!isParticipant) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
     const msg = await Message.create({
       conversationId,

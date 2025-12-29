@@ -1,6 +1,6 @@
 // controllers/authController.js
 const User = require('../models/User');
-const SECRET_KEY = 'SECRET_KEY';  
+const SECRET_KEY = process.env.JWT_SECRET;  
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendEmail } = require('../utils/emailService'); // Adjust the path as necessary
@@ -8,7 +8,7 @@ const twilio = require('twilio');
 const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const Invitation = require('../models/Invitation');
-
+const { limiter } = require('../middleware/rateLimiter');
 
 exports.signup = async (req, res) => {
   const { firstName, lastName, email, password, userRole, cnic, phoneNumber, agencyId, country, city } = req.body;
@@ -51,19 +51,19 @@ exports.signup = async (req, res) => {
       invitation = await Invitation.findOne({ inviteePhone: formattedNumber, status: 'pending' });
     }
 
-    if (invitation) {
-      // Update the invitation status
-      invitation.status = 'accepted';
-      invitation.acceptedAt = new Date();
-      await invitation.save();
+    // if (invitation) {
+    //   // Update the invitation status
+    //   invitation.status = 'accepted';
+    //   invitation.acceptedAt = new Date();
+    //   await invitation.save();
 
-      // Notify the inviter
-      const inviter = await User.findById(invitation.inviter);
-      if (inviter) {
-        // Send notification (we'll implement this in the next step)
-        notifyInviter(inviter, user); // user is the newly registered user
-      }
-    }
+    //   // Notify the inviter
+    //   const inviter = await User.findById(invitation.inviter);
+    //   if (inviter) {
+    //     // Send notification (we'll implement this in the next step)
+    //     notifyInviter(inviter, user); // user is the newly registered user
+    //   }
+    // }
 
     await newUser.save();
     res.status(201).json({ message: 'User created successfully' });
@@ -87,7 +87,7 @@ exports.login = async (req, res) => {
       return res.status(403).json({ message: 'Your account is not verified. Please verify your OTP.' });
     }
 
-    const token = jwt.sign(
+  const token = jwt.sign(
       { 
           userId: user._id, 
           email: user.email, 
@@ -96,19 +96,15 @@ exports.login = async (req, res) => {
           lastName: user.lastName,
           agencyId: user.agencyId, 
           country: user.country,
-          profilePicture: user.profilePicture, 
+          // profilePicture: user.profilePicture, 
           whatsappNumber: user.whatsappNumber,
       },
       SECRET_KEY,
       { expiresIn: '12h' }
   );
-  
-  console.log('JWT Token:', token);
-
 
     res.status(200).json({ message: 'Login successful', token });
     console.log('Fetched user data:', user);
-    console.log('JWT Token:', token);
   } catch (error) {
     console.error('Error logging in:', error);
     res.status(500).json({ message: 'Internal server error', error: error.toString() });
@@ -121,6 +117,12 @@ exports.getAllAgents = async (req, res) => {
 
   if (!req.user) {
       return res.status(401).json({ message: 'Unauthorized access' });
+  }
+  if (req.user.role !== 'admin' && req.user.role !== 'agency') {
+      return res.status(403).json({ message: 'Access denied' });
+  }
+  if (req.user.role === 'agency' && req.user.agencyId !== agencyId) {
+      return res.status(403).json({ message: 'Access denied' });
   }
 
 
@@ -140,10 +142,18 @@ exports.updateAgent = async (req, res) => {
   console.log("Update Agent Request:", { id, firstName, lastName, email, phoneNumber, cnic });
 
   try {
+      if (req.user.role !== 'admin' && req.user.role !== 'agency') {
+          return res.status(403).json({ message: 'Access denied' });
+      }
+
       console.log(`Attempting to update agent with ID: ${id}`);
       
+      const query = (req.user.role === 'admin')
+          ? { _id: id }
+          : { _id: id, agencyId: req.user.agencyId };
+
       const agent = await User.findOneAndUpdate(
-          { _id: id },
+          query,
           { firstName, lastName, email, phoneNumber, cnic },
           { new: true, runValidators: true }
       );
@@ -168,9 +178,17 @@ exports.deleteAgent = async (req, res) => {
   console.log("Delete Agent Request:", { id });
 
   try {
+      if (req.user.role !== 'admin' && req.user.role !== 'agency') {
+          return res.status(403).json({ message: 'Access denied' });
+      }
+
       console.log(`Attempting to delete agent with ID: ${id}`);
 
-      const agent = await User.findOneAndDelete({ _id: id });
+      const query = (req.user.role === 'admin')
+          ? { _id: id }
+          : { _id: id, agencyId: req.user.agencyId };
+
+      const agent = await User.findOneAndDelete(query);
 
       if (!agent) {
           console.log(`No agent found for ID: ${id}`);
@@ -203,10 +221,13 @@ exports.sendOtp = async (req, res) => {
   user.otp_expiration = otpExpiration;
   await user.save();
 
-  // Implement a function to send email
-  sendEmail(email, `Your OTP is: ${otp}`, 'Verify Your Email');
-
+  try {
+  await sendEmail(email, `Your OTP is: ${otp}`, 'Verify Your Email');
   res.json({ message: 'OTP sent to your email.' });
+} catch (error) {
+  console.error('Failed to send OTP email:', error);
+  res.status(500).json({ message: 'Failed to send OTP. Please try again.' });
+}
 };
 
 // Function to verify OTP
@@ -237,6 +258,10 @@ exports.getProfile = async (req, res) => {
   const userId = req.params.id;
 
   try {
+    if (req.user.role !== 'admin' && req.user.id !== userId) {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+
     const user = await User.findById(userId).lean();  // Use .lean() for performance if you don't need a full Mongoose document
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -307,13 +332,48 @@ function calculateProfileCompletion(user) {
 
 exports.updateProfile = async (req, res) => {
   const userId = req.params.id;
-  const updates = req.body; // This contains the text fields
+  if (req.user.role !== 'admin' && req.user.id !== userId) {
+    return res.status(403).json({ message: 'Access denied' });
+  }
+
+  const allowedFields = new Set([
+    'firstName',
+    'lastName',
+    'email',
+    'phoneNumber',
+    'whatsappNumber',
+    'country',
+    'city',
+    'location',
+    'businessInfo',
+    'businessName',
+    'businessOwnerName',
+    'businessWorkingArea',
+    'businessNTN',
+    'residential',
+    'commercial',
+    'land',
+    'experience',
+    'skills',
+    'dateOfBirth',
+    'age',
+    'cnic',
+    'businessLogo',
+    'profilePicture'
+  ]);
+
+  const updates = {};
+  Object.keys(req.body || {}).forEach((key) => {
+    if (allowedFields.has(key)) {
+      updates[key] = req.body[key];
+    }
+  });
 
   // Add image URLs if files were uploaded
-  if (req.files['profilePicture']) {
+  if (req.files?.['profilePicture']) {
     updates.profilePicture = req.files['profilePicture'][0].path;
   }
-  if (req.files['businessLogo']) {
+  if (req.files?.['businessLogo']) {
     updates.businessLogo = req.files['businessLogo'][0].path;
   }
 
@@ -391,8 +451,6 @@ exports.forgotPassword = async (req, res) => {
   user.passOtp = passOtp;
   user.passOtpExpiration = passOtpExpiration;
   await user.save();
-
-  console.log(`OTP ${passOtp} sent to ${email} expires at ${passOtpExpiration}`);
   sendEmail(email, `Your OTP for password reset is: ${passOtp}`, 'Reset Your Password');
 
   res.json({ message: 'OTP sent to your email. Please check your inbox.' });
@@ -403,56 +461,92 @@ exports.forgotPassword = async (req, res) => {
 
 exports.verifyOtpPass = async (req, res) => {
   const { email, passOtp } = req.body;
-  console.log("Received OTP verification request with data:", req.body);
-
-  const user = await User.findOne({ email }).exec();
-
-  if (!user) {
-    console.log(`Verify OTP: No user found with email ${email}`);
-    return res.status(404).json({ message: 'User not found' });
+  
+  try {
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    if (!user.passOtpExpiration || new Date(user.passOtpExpiration) <= new Date()) {
+      return res.status(400).json({ message: 'OTP has expired' });
+    }
+    
+    if (user.passOtp !== passOtp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+    
+    // ✅ Generate a secure reset token
+    const crypto = require('crypto');
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    user.passwordResetToken = resetToken;
+    user.passwordResetExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    user.passOtp = null;
+    user.passOtpExpiration = null;
+    
+    await user.save();
+    
+    // Return the token to the client (they must include it in reset request)
+    res.json({ 
+      message: 'OTP verified successfully',
+      resetToken: resetToken // Client must store and send this with password reset
+    });
+  } catch (error) {
+    console.error('Error verifying OTP:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
-
-  if (new Date(user.passOtpExpiration) <= new Date()) {
-    console.log(`Verify OTP: OTP for ${email} has expired.`);
-    return res.status(400).json({ message: 'OTP has expired' });
-  }
-
-  if (user.passOtp !== passOtp) {
-    console.log(`Verify OTP: OTP mismatch for ${email}, expected ${user.passOtp}, received ${passOtp}`);
-    return res.status(400).json({ message: 'Invalid OTP' });
-  }
-
-  user.passOtp = null;  // Clear the OTP as it's no longer needed
-  user.passOtpExpiration = null;
-  await user.save();
-
-  console.log(`OTP verified successfully for ${email}`);
-  res.json({ message: 'OTP verified successfully. Please proceed to reset your password.' });
 };
-
-
-
 
 // Function to reset password
 exports.resetPassword = async (req, res) => {
-  const { email, newPassword } = req.body;
-  console.log("Received OTP verification request with data:", req.body);
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    console.log(`Reset Password: No user found with email ${email}`);
-    return res.status(404).json({ message: 'User not found' });
+  const { email, newPassword, resetToken } = req.body;
+  
+  // Validate inputs
+  if (!email || !newPassword || !resetToken) {
+    return res.status(400).json({ message: 'Email, new password, and reset token are required' });
   }
-
-  const hashedPassword = await bcrypt.hash(newPassword, 12);
-  user.password = hashedPassword;
-  await user.save();
-
-  console.log(`Password has been reset successfully for ${email}`);
-  res.json({ message: 'Password has been reset successfully. You can now log in with the new password.' });
+  
+  // Validate password strength
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters' });
+  }
+  
+  try {
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // ✅ VERIFY the reset token (you'll need to store this when OTP is verified)
+    if (!user.passwordResetToken || user.passwordResetToken !== resetToken) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
+    }
+    
+    // Check if reset token has expired (e.g., 15 minutes)
+    if (user.passwordResetExpires && user.passwordResetExpires < new Date()) {
+      return res.status(400).json({ message: 'Reset token has expired. Please request a new one.' });
+    }
+    
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
+    user.password = hashedPassword;
+    
+    // Clear reset tokens after successful reset
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    user.passOtp = undefined;
+    user.passOtpExpiration = undefined;
+    
+    await user.save();
+    
+    res.json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
 };
-
-
 
 // Function to invite a new user by SMS
 exports.inviteBySMS = async (req, res) => {
