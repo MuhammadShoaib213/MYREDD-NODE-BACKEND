@@ -26,15 +26,15 @@ const upload = multer({
   storage: storage,
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
       'audio/webm',
     ];
-    if (allowedMimeTypes.includes(file.mimetype)) {
+    const isImage = file.mimetype.startsWith('image/');
+    if (isImage || allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
+      console.error(
+        `Upload rejected: name=${file.originalname} mime=${file.mimetype}`,
+      );
       cb(new Error('Only .png, .jpg, .jpeg, and .webm format allowed!'), false);
     }
   }
