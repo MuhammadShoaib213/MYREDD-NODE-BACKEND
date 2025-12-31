@@ -499,7 +499,10 @@ exports.verifyOtpPass = async (req, res) => {
       return res.status(400).json({ message: 'OTP has expired' });
     }
     
-    if (user.passOtp !== passOtp) {
+    const incomingOtp = passOtp != null ? passOtp.toString().trim() : '';
+    const storedOtp =
+        user.passOtp != null ? user.passOtp.toString().trim() : '';
+    if (!incomingOtp || storedOtp !== incomingOtp) {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
     
