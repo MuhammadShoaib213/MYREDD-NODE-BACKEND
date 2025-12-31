@@ -20,9 +20,17 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image')) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedExts = ['.png', '.jpg', '.jpeg', '.webp'];
+  const isImageMime = file.mimetype.startsWith('image/');
+  const isOctetImage =
+    file.mimetype === 'application/octet-stream' && allowedExts.includes(ext);
+  if (isImageMime || isOctetImage) {
     cb(null, true);
   } else {
+    console.error(
+      `Customer image rejected: name=${file.originalname} mime=${file.mimetype}`,
+    );
     cb(new Error('Not an image! Please upload only images.'), false);
   }
 };
