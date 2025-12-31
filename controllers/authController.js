@@ -25,12 +25,12 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: 'CNIC is already registered' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
     const newUser = new User({
       firstName,
       lastName,
       email,
-      password: hashedPassword,
+      // Password hashing is handled in User model pre('save') hook.
+      password,
       userRole,
       cnic,
       phoneNumber,
