@@ -1,5 +1,6 @@
 const multer = require('multer');
 const path = require('path');
+const { errors } = require('./errorHandler');
 
 const sanitizeFilename = (filename) => {
   // Remove directory paths, keep only filename
@@ -23,21 +24,27 @@ const addPropertyStorage = multer.diskStorage({
   },
 });
 
-// File filter to validate file types
+// File filter to validate file types (allow common mobile upload variants)
 const addPropertyFileFilter = (req, file, cb) => {
-  const allowedTypes = [
-    'image/jpeg',
-    'image/png',
-    'image/jpg',
-    'video/mp4',
-    // Add more types if needed
-  ];
-  if (allowedTypes.includes(file.mimetype)) {
+  const ext = path.extname(file.originalname || '').toLowerCase();
+  const allowedExts = ['.png', '.jpg', '.jpeg', '.webp', '.mp4'];
+  const isImage = file.mimetype.startsWith('image/');
+  const isVideo = file.mimetype === 'video/mp4';
+  const isOctetImage =
+    file.mimetype === 'application/octet-stream' && allowedExts.includes(ext);
+
+  if (isImage || isVideo || isOctetImage) {
     cb(null, true);
   } else {
+    console.error(
+      `Property file rejected: name=${file.originalname} mime=${file.mimetype}`,
+    );
     cb(
-      new Error('Invalid file type. Only JPEG, PNG, JPG, and MP4 are allowed.'),
-      false
+      errors.badRequest(
+        'Invalid file type. Only JPEG, PNG, JPG, WEBP, and MP4 are allowed.',
+        'INVALID_FILE_TYPE',
+      ),
+      false,
     );
   }
 };
