@@ -87,12 +87,16 @@ exports.addCustomer = async (req, res) => {
     }
 
     console.log(`File uploaded at path: ${req.file.path}`);
+    const safeFilename = req.file.filename
+      ? req.file.filename
+      : path.basename(req.file.path);
+    const normalizedProfilePath = `uploads/${safeFilename}`;
 
     // Create the new customer object
     const newCustomer = new Customer({
       ...req.body,
       userId: actualUserId, // Assign the actual user ID (either from token or invite)
-      profilePicture: req.file.path
+      profilePicture: normalizedProfilePath
     });
 
     // Find the customer with the highest customerId

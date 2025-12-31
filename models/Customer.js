@@ -81,6 +81,17 @@ const customerSchema = new mongoose.Schema({
   contactPreference: { 
     type: String,
     enum: ['phone', 'whatsapp', 'email', 'any']
+  },
+
+  profilePicture: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        if (!v) return true;
+        return /\.(jpg|jpeg|png|webp)$/i.test(v);
+      },
+      message: 'Profile picture must be an image file'
+    }
   }
 }, {
   timestamps: true
