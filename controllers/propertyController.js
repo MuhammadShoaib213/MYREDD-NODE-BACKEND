@@ -4,6 +4,7 @@ const { errors, asyncHandler } = require('../middleware/errorHandler');
 const Counter = require('../models/Counter');
 const { getPaginationOptions, paginatedQuery, withTenantScope, PROJECTIONS } = require('../utils/mongooseHelpers');
 const { deleteUploadedFile, cleanupOnError } = require('../middleware/uploadSecurity');
+const path = require('path');
 
 exports.addProperty = asyncHandler(async (req, res) => {
   // 1. Get user from authenticated token (NOT from req.body)
@@ -31,14 +32,39 @@ exports.addProperty = asyncHandler(async (req, res) => {
   // 4. Generate atomic property number
     const propertyNumber = await Counter.getNextSequence('propertyNumber');
   
-  // 5. Create property
+  // 5. Map uploaded files (if any)
+  const toPublicPath = (file) => {
+    const rawPath = (file && file.path) ? file.path.toString() : '';
+    if (!rawPath) return null;
+    const normalized = rawPath.replace(/\\/g, '/');
+    const marker = '/uploads/';
+    const idx = normalized.indexOf(marker);
+    if (idx >= 0) {
+      return normalized.slice(idx + 1); // keep "uploads/..."
+    }
+    if (normalized.startsWith('uploads/')) {
+      return normalized;
+    }
+    return `uploads/properties/${path.basename(normalized)}`;
+  };
+
+  const frontPictures = (req.files?.frontPictures || [])
+    .map(toPublicPath)
+    .filter(Boolean);
+  const propertyPictures = (req.files?.propertyPictures || [])
+    .map(toPublicPath)
+    .filter(Boolean);
+
+  // 6. Create property
   try {
     const property = await Property.create({
       ...req.body,
       userId,  // Always from token
       propertyNumber,
       propertyCode: `${customer.customerId}${propertyNumber}`,
-      status: 'New'
+      status: 'New',
+      frontPictures,
+      propertyPictures
     });
     
     res.status(201).json({
