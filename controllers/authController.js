@@ -556,8 +556,8 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Reset token has expired. Please request a new one.' });
     }
     
-    const hashedPassword = await bcrypt.hash(newPassword, 12);
-    user.password = hashedPassword;
+    // Password hashing is handled in User model pre('save') hook.
+    user.password = newPassword;
     
     // Clear reset tokens after successful reset
     user.passwordResetToken = undefined;
