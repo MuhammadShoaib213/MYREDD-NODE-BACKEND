@@ -1,6 +1,7 @@
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
+const { errors } = require('./errorHandler');
 
 const sanitizeFilename = (filename) => {
   const basename = path.basename(filename);
@@ -30,17 +31,27 @@ const upload = multer({
     files: 3
   },
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      'audio/webm',
-    ];
+    const allowedMimeTypes = ['audio/webm', 'video/webm'];
+    const allowedExts = ['.png', '.jpg', '.jpeg', '.webp', '.webm'];
+    const ext = path.extname(file.originalname || '').toLowerCase();
     const isImage = file.mimetype.startsWith('image/');
-    if (isImage || allowedMimeTypes.includes(file.mimetype)) {
+    const isOctetStream =
+      file.mimetype === 'application/octet-stream' &&
+      allowedExts.includes(ext);
+
+    if (isImage || allowedMimeTypes.includes(file.mimetype) || isOctetStream) {
       cb(null, true);
     } else {
       console.error(
         `Upload rejected: name=${file.originalname} mime=${file.mimetype}`,
       );
-      cb(new Error('Only .png, .jpg, .jpeg, and .webm format allowed!'), false);
+      cb(
+        errors.badRequest(
+          'Only .png, .jpg, .jpeg, .webp, and .webm formats allowed!',
+          'INVALID_FILE_TYPE',
+        ),
+        false,
+      );
     }
   }
 }).fields([
