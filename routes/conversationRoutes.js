@@ -7,6 +7,19 @@ const Message      = require('../models/Message');
 const Friends      = require('../models/Friends');
 const { authenticateToken } = require('../middleware/verifyToken');
 const { asyncHandler } = require('../middleware/errorHandler');
+const path = require('path');
+
+const normalizeUploadPath = (req, value) => {
+  if (!value) return value;
+  if (typeof value !== 'string') return value;
+  if (value.startsWith('http://') || value.startsWith('https://')) return value;
+  const filename = path.basename(value);
+  const relative = value.startsWith('/uploads/')
+    ? value
+    : `/uploads/${filename}`;
+  const base = `${req.protocol}://${req.get('host')}`;
+  return encodeURI(`${base}${relative}`);
+};
 
 /* ───────── get all conversations ───────── */
 router.get('/', authenticateToken, asyncHandler(async (req, res) => {
@@ -20,16 +33,18 @@ router.get('/', authenticateToken, asyncHandler(async (req, res) => {
 
     const convos = await Conversation.find({
       participants: userId,
-    }).populate('participants', 'firstName lastName profilePicture');
+    })
+      .sort({ updatedAt: -1 })
+      .populate('participants', 'firstName lastName profilePicture');
 
     const payload = convos.map(c => {
       const other = c.participants.find(p => p._id.toString() !== userId);
       return {
         _id          : c._id,
         name         : other ? `${other.firstName} ${other.lastName}` : 'Unknown',
-        profilePicture: other?.profilePicture,
+        profilePicture: normalizeUploadPath(req, other?.profilePicture),
         lastMessage  : c.lastMessage,
-        updatedAt    : c.updatedAt,
+        lastMessageAt: c.updatedAt,
       };
     });
 

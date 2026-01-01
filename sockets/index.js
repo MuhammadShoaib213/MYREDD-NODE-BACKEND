@@ -71,7 +71,28 @@ module.exports = function attachSocket(server) {
         return;
       }
 
-      // ... rest of message handling
+      const msg = await Message.create({
+        conversationId,
+        senderId: userId,
+        text: text?.toString() ?? '',
+        attachments: attachments || [],
+      });
+
+      const lastMessage = (text && text.trim()) ? text.trim() : '[Attachment]';
+      await Conversation.findByIdAndUpdate(conversationId, {
+        lastMessage,
+        updatedAt: new Date(),
+      });
+
+      const payload = await Message.findById(msg._id)
+        .populate('senderId', 'firstName lastName profilePicture')
+        .lean();
+
+      const normalizedPayload = payload
+        ? { ...payload, senderId: payload.senderId?._id ?? payload.senderId }
+        : msg;
+
+      io.to(conversationId).emit('message', normalizedPayload);
     } catch (error) {
       console.error('Error handling message:', error);
       socket.emit('error', { message: 'Failed to send message' });
