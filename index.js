@@ -151,7 +151,7 @@ const adminRoutes          = require('./routes/adminRoutes');
 const notificationRoutes   = require('./routes/notification');
 const conversationRoutes   = require('./routes/conversationRoutes');
 
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/customers', require('./routes/customers'));
 app.use('/api/properties',    propertyRoutes);
 app.use('/api/friends',       friendRoutes);        // be sure paths don't overlap
