@@ -22,6 +22,30 @@ const PropertySchema = new mongoose.Schema({
     trim: true,
     maxlength: [100, 'City name too long']
   },
+
+  district: {
+    type: String,
+    trim: true,
+    maxlength: [100, 'District name too long']
+  },
+
+  areaSociety: {
+    type: String,
+    trim: true,
+    maxlength: [120, 'Area/Society name too long']
+  },
+
+  phaseBlock: {
+    type: String,
+    trim: true,
+    maxlength: [120, 'Phase/Block name too long']
+  },
+
+  detectedAddress: {
+    type: String,
+    trim: true,
+    maxlength: [255, 'Address too long']
+  },
   
   inquiryType: { 
     type: String, 
@@ -60,12 +84,95 @@ const PropertySchema = new mongoose.Schema({
     min: [0, 'Size cannot be negative'],
     max: [1000000, 'Size value too large']
   },
+
+  sizeUnit: {
+    type: String,
+    trim: true
+  },
+
+  coveredWidth: {
+    type: Number,
+    min: [0, 'Covered width cannot be negative']
+  },
+
+  coveredLength: {
+    type: Number,
+    min: [0, 'Covered length cannot be negative']
+  },
+
+  coveredDepth: {
+    type: Number,
+    min: [0, 'Covered depth cannot be negative']
+  },
+
+  coveredUnit: {
+    type: String,
+    trim: true
+  },
+
+  landWidth: {
+    type: Number,
+    min: [0, 'Land width cannot be negative']
+  },
+
+  landLength: {
+    type: Number,
+    min: [0, 'Land length cannot be negative']
+  },
+
+  landDepth: {
+    type: Number,
+    min: [0, 'Land depth cannot be negative']
+  },
+
+  landUnit: {
+    type: String,
+    trim: true
+  },
+
+  propertyNumber: {
+    type: Number
+  },
+
+  streetName: {
+    type: String,
+    trim: true
+  },
+
+  Streetwidth: {
+    type: Number
+  },
+
+  StreetwidthUnit: {
+    type: String,
+    trim: true
+  },
+
+  floors: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
+
+  facilities: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
   
   demand: { 
     type: Number, 
     default: 0,
     min: [0, 'Demand cannot be negative'],
     max: [999999999999, 'Demand value too large']
+  },
+
+  advancePayment: {
+    type: Number,
+    min: [0, 'Advance payment cannot be negative']
+  },
+
+  mainOption: {
+    type: String,
+    trim: true
   },
 
   budget: {
@@ -143,6 +250,76 @@ const PropertySchema = new mongoose.Schema({
       },
       message: 'Maximum 20 property pictures allowed'
     }
+  },
+
+  video: {
+    type: String,
+    trim: true
+  },
+
+  propertyCondition: {
+    type: String,
+    trim: true
+  },
+
+  contractTerm: {
+    type: String,
+    trim: true
+  },
+
+  // Legacy/compat fields used by older views
+  purpose: {
+    type: String,
+    trim: true
+  },
+
+  area: {
+    type: String,
+    trim: true
+  },
+
+  category: {
+    type: String,
+    trim: true
+  },
+
+  features: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
+
+  bedrooms: {
+    type: Number,
+    min: [0, 'Bedrooms cannot be negative']
+  },
+
+  length: {
+    type: Number,
+    min: [0, 'Length cannot be negative']
+  },
+
+  width: {
+    type: Number,
+    min: [0, 'Width cannot be negative']
+  },
+
+  expected: {
+    type: Number,
+    min: [0, 'Expected value cannot be negative']
+  },
+
+  closingDate: {
+    type: Date
+  },
+
+  timeForPayment: {
+    type: String,
+    trim: true
+  },
+
+  images: {
+    type: [String],
+    default: []
   },
   
   propertyCode: {
