@@ -3,12 +3,13 @@ const express = require('express');
 const router = express.Router();
 const fs = require('fs');
 const path = require('path');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 /**
  * GET /api/places/cities
  * Returns the list of all city names from cities.json
  */
-router.get('/cities', (req, res) => {
+router.get('/cities', asyncHandler((req, res) => {
   try {
     // Read the file that has the "cities" array
     const citiesPath = path.join(__dirname, '..', 'data', 'cities.json');
@@ -20,14 +21,14 @@ router.get('/cities', (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Could not read cities data.' });
   }
-});
+}));
 
 /**
  * GET /api/places/cities/:cityName/areas
  * Reads a JSON file named after the city (e.g. "Karachi.json") and returns its contents
  */
 // GET /api/places/cities/:cityName/areas
-router.get('/cities/:cityName/areas', (req, res) => {
+router.get('/cities/:cityName/areas', asyncHandler((req, res) => {
   const { cityName } = req.params;
   const filePath = path.join(__dirname, '..', 'data', `${cityName}.json`);
 
@@ -58,6 +59,6 @@ router.get('/cities/:cityName/areas', (req, res) => {
     // For instance, return an empty array or a specific error message
     return res.json([]);
   }
-});
+}));
 
 module.exports = router;

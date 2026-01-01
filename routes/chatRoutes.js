@@ -3,11 +3,12 @@ const protect = require('../middleware/verifyToken');           // your JWT midd
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const Friends = require('../models/Friends');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
 /* GET  /api/conversations            → friend-only conversations */
-router.get('/', protect, async (req, res) => {
+router.get('/', protect, asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
   // 1) all accepted friend IDs
@@ -24,10 +25,10 @@ router.get('/', protect, async (req, res) => {
     .sort({ updatedAt: -1 });
 
   res.json(conv);
-});
+}));
 
 /* GET  /api/messages/:conversationId → paginated messages */
-router.get('/messages/:conversationId', protect, async (req, res) => {
+router.get('/messages/:conversationId', protect, asyncHandler(async (req, res) => {
   const PAGE_SIZE = 30;
   const { conversationId } = req.params;
   const { page = 1 } = req.query;
@@ -38,6 +39,6 @@ router.get('/messages/:conversationId', protect, async (req, res) => {
     .limit(PAGE_SIZE);
 
   res.json(msgs.reverse()); // latest last
-});
+}));
 
 module.exports = router;

@@ -6,8 +6,9 @@ const FriendRequest = require('../models/FriendRequest'); // Model for friend re
 const Friend = require('../models/Friend'); // Model for confirmed friendships
 const Chat = require('../models/chat'); // Adjust the path as necessary
 const mongoose = require('mongoose');
+const { asyncHandler } = require('../middleware/errorHandler');
 
-router.post('/add', authenticateToken, async (req, res) => {
+router.post('/add', authenticateToken, asyncHandler(async (req, res) => {
     const userEmail = req.user.email;
     const friendEmail = req.body.email;
 
@@ -48,13 +49,13 @@ router.post('/add', authenticateToken, async (req, res) => {
         console.error("Error sending friend request:", error);
         return res.status(500).json({ message: "Error sending friend request", error: error.message });
     }
-});
+}));
 
 
 
 
 // GET endpoint to list all friend requests received by the logged-in user
-router.get('/requests', authenticateToken, async (req, res) => {
+router.get('/requests', authenticateToken, asyncHandler(async (req, res) => {
     const userId = req.user.id;
 
     try {
@@ -64,9 +65,9 @@ router.get('/requests', authenticateToken, async (req, res) => {
         console.error("Error fetching friend requests:", error);
         return res.status(500).json({ message: "Error fetching friend requests", error: error.message });
     }
-});
+}));
 
-router.post('/accept', authenticateToken, async (req, res) => {
+router.post('/accept', authenticateToken, asyncHandler(async (req, res) => {
     const requestId = req.body.requestId;
 
     try {
@@ -115,12 +116,12 @@ router.post('/accept', authenticateToken, async (req, res) => {
         console.error("Error accepting friend request:", error);
         return res.status(500).json({ message: "Error accepting friend request", error: error.message });
     }
-});
+}));
 
 
 
 
-router.get('/list', authenticateToken, async (req, res) => {
+router.get('/list', authenticateToken, asyncHandler(async (req, res) => {
     const userId = req.user.id;
     console.log("Request to list all friends for user ID:", userId);
 
@@ -155,11 +156,11 @@ router.get('/list', authenticateToken, async (req, res) => {
         console.error("Error fetching friends for user ID:", userId, error);
         return res.status(500).json({ message: "Error fetching friends", error: error.message });
     }
-});
+}));
 
 
 
-router.get('/friends', authenticateToken, async (req, res) => {
+router.get('/friends', authenticateToken, asyncHandler(async (req, res) => {
     const userId = req.query.userId;
     console.log('Fetching friend list for user ID:', userId);
 
@@ -194,7 +195,7 @@ router.get('/friends', authenticateToken, async (req, res) => {
         console.error("Error fetching friends for user ID:", userId, error);
         return res.status(500).json({ message: "Error fetching friends", error: error.message });
     }
-});
+}));
 
 
 module.exports = router;

@@ -14,13 +14,14 @@
 const express            = require('express');
 const { authenticateToken } = require('../middleware/verifyToken');
 const c = require('../controllers/sharedLeadController');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 const router = express.Router();
 
-router.post  ('/share-lead',                   authenticateToken, c.shareLead);
-router.get   ('/shared',                       authenticateToken, c.getSharedLeads);
-router.get   ('/broadcast/:id',                authenticateToken, c.getBroadcastTracking);
-router.get   ('/received',                     authenticateToken, c.getReceivedLeads);
-router.patch ('/received/:id/status',          authenticateToken, c.updateReceivedStatus);
+router.post  ('/share-lead',                   authenticateToken, asyncHandler(c.shareLead));
+router.get   ('/shared',                       authenticateToken, asyncHandler(c.getSharedLeads));
+router.get   ('/broadcast/:id',                authenticateToken, asyncHandler(c.getBroadcastTracking));
+router.get   ('/received',                     authenticateToken, asyncHandler(c.getReceivedLeads));
+router.patch ('/received/:id/status',          authenticateToken, asyncHandler(c.updateReceivedStatus));
 
 module.exports = router;

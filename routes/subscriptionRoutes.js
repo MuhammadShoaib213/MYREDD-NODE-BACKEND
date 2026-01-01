@@ -4,11 +4,11 @@ const subscriptionController = require('../controllers/subscriptionController');
 const Subscription = require('../models/Subscription');
 const Property = require('../models/Property');
 const { authenticateToken } = require('../middleware/verifyToken');
+const { asyncHandler } = require('../middleware/errorHandler');
 
+router.post('/subscriptions', authenticateToken, asyncHandler(subscriptionController.addSubscription));
 
-router.post('/subscriptions', authenticateToken, subscriptionController.addSubscription);
-
-router.get('/subscriptions/check-limit/:userId', authenticateToken, async (req, res) => {
+router.get('/subscriptions/check-limit/:userId', authenticateToken, asyncHandler(async (req, res) => {
     const { userId } = req.params;
     if (req.user.role !== 'admin' && req.user.id !== userId) {
         return res.status(403).json({ message: 'Access denied' });
@@ -32,7 +32,7 @@ router.get('/subscriptions/check-limit/:userId', authenticateToken, async (req, 
         console.error('Error checking property limit:', error);
         res.status(500).send('Error checking property limit');
     }
-});
+}));
 
 
 module.exports = router;

@@ -6,9 +6,10 @@ const Conversation = require('../models/Conversation');
 const Message      = require('../models/Message');
 const Friends      = require('../models/Friends');
 const { authenticateToken } = require('../middleware/verifyToken');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 /* ───────── get all conversations ───────── */
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
@@ -36,10 +37,10 @@ router.get('/', authenticateToken, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+}));
 
 /* ───────── messages in a conversation ───────── */
-router.get('/messages/:conversationId', authenticateToken, async (req, res) => {
+router.get('/messages/:conversationId', authenticateToken, asyncHandler(async (req, res) => {
   try {
     const { conversationId } = req.params;
     const userId = req.user.id;
@@ -72,12 +73,12 @@ router.get('/messages/:conversationId', authenticateToken, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+}));
 
 
 
 /* ───────── create-or-fetch conversation (debug + fixed) ───────── */
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, asyncHandler(async (req, res) => {
   try {
     const userId   = req.user.id;
     const { friendId } = req.body;
@@ -114,11 +115,11 @@ router.post('/', authenticateToken, async (req, res) => {
     console.error('❌  create/fetch convo error:', err);
     res.status(500).json({ error: err.message });
   }
-});
+}));
 
 
 /* ───────── send a message (REST fallback) ───────── */
-router.post('/:conversationId/messages', authenticateToken, async (req, res) => {
+router.post('/:conversationId/messages', authenticateToken, asyncHandler(async (req, res) => {
   try {
     const { conversationId } = req.params;
     const { text } = req.body;
@@ -156,6 +157,6 @@ router.post('/:conversationId/messages', authenticateToken, async (req, res) => 
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-});
+}));
 
 module.exports = router;

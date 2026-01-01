@@ -18,11 +18,12 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
 const adminAuth = require('../middleware/adminAuth');
+const { asyncHandler } = require('../middleware/errorHandler');
 
 // Public route for admin login
-router.post('/login', adminController.login);
+router.post('/login', asyncHandler(adminController.login));
 
 // Protected route for dashboard data
-router.get('/dashboard', adminAuth, adminController.getDashboardData);
+router.get('/dashboard', adminAuth, asyncHandler(adminController.getDashboardData));
 
 module.exports = router;
