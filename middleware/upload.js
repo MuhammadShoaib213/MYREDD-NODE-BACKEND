@@ -22,8 +22,13 @@ const storage = multer.diskStorage({
   }
 });
 
+// ✅ FIXED: Added file size limits
 const upload = multer({
   storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB max per file
+    files: 3
+  },
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = [
       'audio/webm',
@@ -41,7 +46,7 @@ const upload = multer({
 }).fields([
   { name: 'profilePicture', maxCount: 1 },
   { name: 'businessLogo', maxCount: 1 },
-  { name: 'audio', maxCount: 1 } // Add this line to handle audio uploads
+  { name: 'audio', maxCount: 1 }
 ]);
 
 module.exports = upload;

@@ -4,6 +4,40 @@ const InviteToken = require('../models/InviteToken');
 const path = require('path');
 
 // Set up multer for file storage
+// const sanitizeFilename = (filename) => {
+//   const basename = path.basename(filename);
+//   return basename.replace(/[^a-zA-Z0-9.-_]/g, '_').substring(0, 100);
+// };
+
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, './uploads/');
+//   },
+//   filename: (req, file, cb) => {
+//     const safeName = sanitizeFilename(file.originalname);
+//     cb(null, `${new Date().toISOString().replace(/:/g, '-')}-${safeName}`);
+//   }
+// });
+
+// const fileFilter = (req, file, cb) => {
+//   const ext = path.extname(file.originalname || '').toLowerCase();
+//   const allowedExts = ['.png', '.jpg', '.jpeg', '.webp'];
+//   const isImageMime = file.mimetype.startsWith('image/');
+//   const isOctetImage =
+//     file.mimetype === 'application/octet-stream' && allowedExts.includes(ext);
+//   if (isImageMime || isOctetImage) {
+//     cb(null, true);
+//   } else {
+//     console.error(
+//       `Customer image rejected: name=${file.originalname} mime=${file.mimetype}`,
+//     );
+//     cb(new Error('Not an image! Please upload only images.'), false);
+//   }
+// };
+
+// const upload = multer({ storage: storage, fileFilter: fileFilter });
+
+// Set up multer for file storage with SIZE LIMITS
 const sanitizeFilename = (filename) => {
   const basename = path.basename(filename);
   return basename.replace(/[^a-zA-Z0-9.-_]/g, '_').substring(0, 100);
@@ -35,7 +69,15 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage: storage, fileFilter: fileFilter });
+// ✅ FIXED: Added limits to prevent huge file uploads
+const upload = multer({ 
+  storage: storage, 
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 3 * 1024 * 1024, // 3MB max per file
+    files: 1
+  }
+});
 
 // Controller to handle fetching customers
 exports.getCustomers = async (req, res) => {

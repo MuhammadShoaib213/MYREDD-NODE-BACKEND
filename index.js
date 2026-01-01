@@ -11,8 +11,12 @@ const multer        = require('multer');
 const axios         = require('axios');
 const mongoSanitize = require('express-mongo-sanitize');
 const helmet        = require('helmet');
-const stripe        = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+const stripe        = require('stripe')(process.env.STRIPE_SECRET_KEY); 
+const { 
+    errorHandler, 
+    notFoundHandler, 
+    correlationIdMiddleware 
+  } = require('./middleware/errorHandler');
 const { limiter } = require('./middleware/rateLimiter');
 
 /* ────────────────────────────────────────────────────────── */
@@ -49,6 +53,7 @@ if (process.env.JWT_SECRET === 'SECRET_KEY' || process.env.JWT_SECRET.length < 3
 console.log('✅ Environment validation passed');
 
 
+app.use(correlationIdMiddleware);
 /* attach io to every req so REST routes can emit */
 app.use((req, _res, next) => { req.io = io; next(); });
 
@@ -129,8 +134,6 @@ app.use(
 /* ────────────────────────────────────────────────────────── */
 /* 4) routes                                                  */
 /* ────────────────────────────────────────────────────────── */
-const authRoutes           = require('./routes/authRoutes');
-const customerRoutes       = require('./routes/customers');
 const propertyRoutes       = require('./routes/propertyRoutes');
 const friendRoutes         = require('./routes/friend');
 const attendanceRoutes     = require('./routes/attendanceRoutes');
@@ -148,8 +151,8 @@ const adminRoutes          = require('./routes/adminRoutes');
 const notificationRoutes   = require('./routes/notification');
 const conversationRoutes   = require('./routes/conversationRoutes');
 
-app.use('/api/auth',          authRoutes);
-app.use('/api/customers',     customerRoutes);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/customers', require('./routes/customers'));
 app.use('/api/properties',    propertyRoutes);
 app.use('/api/friends',       friendRoutes);        // be sure paths don't overlap
 app.use('/api/attendance',    attendanceRoutes);
