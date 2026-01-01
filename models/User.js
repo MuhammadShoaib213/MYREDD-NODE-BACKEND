@@ -118,6 +118,17 @@ const userSchema = new mongoose.Schema({
       message: 'Profile picture must be an image file'
     }
   },
+
+  businessLogo: {
+    type: String,
+    validate: {
+      validator: function(v) {
+        if (!v) return true;
+        return /\.(jpg|jpeg|png|webp)$/i.test(v);
+      },
+      message: 'Business logo must be an image file'
+    }
+  },
   
   country: { 
     type: String,
@@ -129,6 +140,62 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
     maxlength: [100, 'City name too long']
+  },
+
+  location: {
+    type: String,
+    trim: true,
+    maxlength: [255, 'Location too long']
+  },
+
+  businessInfo: {
+    type: String,
+    trim: true
+  },
+
+  businessName: {
+    type: String,
+    trim: true
+  },
+
+  businessOwnerName: {
+    type: String,
+    trim: true
+  },
+
+  businessWorkingArea: {
+    type: String,
+    trim: true
+  },
+
+  businessNTN: {
+    type: String,
+    trim: true
+  },
+
+  residential: {
+    type: String,
+    trim: true
+  },
+
+  commercial: {
+    type: String,
+    trim: true
+  },
+
+  land: {
+    type: String,
+    trim: true
+  },
+
+  skills: {
+    type: [String],
+    default: []
+  },
+
+  agencyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Agency'
   },
   
   experience: { 

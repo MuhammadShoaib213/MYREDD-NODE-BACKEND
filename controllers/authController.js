@@ -386,6 +386,12 @@ exports.updateProfile = async (req, res) => {
       updates[key] = req.body[key];
     }
   });
+  if (typeof updates.skills === 'string') {
+    updates.skills = updates.skills
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  }
 
   // Add image URLs if files were uploaded
   if (req.files?.['profilePicture']) {
