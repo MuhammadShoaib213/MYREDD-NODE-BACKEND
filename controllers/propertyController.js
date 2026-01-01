@@ -55,10 +55,55 @@ exports.addProperty = asyncHandler(async (req, res) => {
     .map(toPublicPath)
     .filter(Boolean);
 
-  // 6. Create property
+  // 6. Normalize JSON-encoded fields (multipart sends these as strings)
+  const parseJsonField = (value) => {
+    if (value == null) return value;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+    try {
+      return JSON.parse(trimmed);
+    } catch (_) {
+      return value;
+    }
+  };
+
+  const normalizeNumber = (value) => {
+    if (value == null || value === '') return value;
+    const num = Number(value);
+    return Number.isNaN(num) ? value : num;
+  };
+
+  const normalizeMoneyField = (value) => {
+    if (!value || typeof value !== 'object') return value;
+    const type = (value.type ?? '').toString().toLowerCase();
+    const normalizedType = type == 'fixed' ? 'value' : value.type;
+    return {
+      ...value,
+      type: normalizedType,
+      value: normalizeNumber(value.value),
+    };
+  };
+
+  const body = { ...req.body };
+  body.budget = parseJsonField(body.budget);
+  if (body.budget && typeof body.budget === 'object') {
+    body.budget = {
+      ...body.budget,
+      min: normalizeNumber(body.budget.min),
+      max: normalizeNumber(body.budget.max),
+    };
+  }
+  body.commission = normalizeMoneyField(parseJsonField(body.commission));
+  body.addedValue = normalizeMoneyField(parseJsonField(body.addedValue));
+  body.floors = parseJsonField(body.floors);
+  body.facilities = parseJsonField(body.facilities);
+  body.demand = normalizeNumber(body.demand);
+
+  // 7. Create property
   try {
     const property = await Property.create({
-      ...req.body,
+      ...body,
       userId,  // Always from token
       propertyNumber,
       propertyCode: `${customer.customerId}${propertyNumber}`,
@@ -232,6 +277,18 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
     }
 
     // Extracting the inquiry types from each property
+    const parseJsonField = (value) => {
+      if (value == null) return value;
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      if (!trimmed) return value;
+      try {
+        return JSON.parse(trimmed);
+      } catch (_) {
+        return value;
+      }
+    };
+
     const propertiesWithInquiryType = properties.map(property => {
       console.log(`Processing property ID: ${property._id}`); // Log the processing of each property
       return {
@@ -243,10 +300,10 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
         dateAdded: property.createdAt, // Returning the date the property was added to the database
         status: property.status,
         propertySubType: property.propertySubType,
-        commission : property.commission,
-        addedValue : property.addedValue,
+        commission : parseJsonField(property.commission),
+        addedValue : parseJsonField(property.addedValue),
         demand : property.demand,
-        budget : property.budget,
+        budget : parseJsonField(property.budget),
         
         // Other fields can be added here if needed
       };
@@ -388,8 +445,52 @@ exports.updateProperty = asyncHandler(async (req, res) => {
   delete req.body.propertyCode;
   delete req.body.propertyNumber;
   
+  const parseJsonField = (value) => {
+    if (value == null) return value;
+    if (typeof value !== 'string') return value;
+    const trimmed = value.trim();
+    if (!trimmed) return value;
+    try {
+      return JSON.parse(trimmed);
+    } catch (_) {
+      return value;
+    }
+  };
+
+  const normalizeNumber = (value) => {
+    if (value == null || value === '') return value;
+    const num = Number(value);
+    return Number.isNaN(num) ? value : num;
+  };
+
+  const normalizeMoneyField = (value) => {
+    if (!value || typeof value !== 'object') return value;
+    const type = (value.type ?? '').toString().toLowerCase();
+    const normalizedType = type == 'fixed' ? 'value' : value.type;
+    return {
+      ...value,
+      type: normalizedType,
+      value: normalizeNumber(value.value),
+    };
+  };
+
+  const body = { ...req.body };
+  body.budget = parseJsonField(body.budget);
+  if (body.budget && typeof body.budget === 'object') {
+    body.budget = {
+      ...body.budget,
+      min: normalizeNumber(body.budget.min),
+      max: normalizeNumber(body.budget.max),
+    };
+  }
+  body.commission = normalizeMoneyField(parseJsonField(body.commission));
+  body.addedValue = normalizeMoneyField(parseJsonField(body.addedValue));
+  body.floors = parseJsonField(body.floors);
+  body.facilities = parseJsonField(body.facilities);
+  body.demand = normalizeNumber(body.demand);
+
   // Update
-  Object.assign(property, req.body);
+  Object.assign(property, body);
   await property.save();
   
   res.json({

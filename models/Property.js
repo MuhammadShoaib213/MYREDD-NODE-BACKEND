@@ -67,6 +67,45 @@ const PropertySchema = new mongoose.Schema({
     min: [0, 'Demand cannot be negative'],
     max: [999999999999, 'Demand value too large']
   },
+
+  budget: {
+    min: {
+      type: Number,
+      min: [0, 'Budget min cannot be negative']
+    },
+    max: {
+      type: Number,
+      min: [0, 'Budget max cannot be negative']
+    }
+  },
+
+  commission: {
+    type: {
+      type: String,
+      enum: {
+        values: ['percentage', 'value', 'fixed'],
+        message: '{VALUE} is not a valid commission type'
+      }
+    },
+    value: {
+      type: Number,
+      min: [0, 'Commission value cannot be negative']
+    }
+  },
+
+  addedValue: {
+    type: {
+      type: String,
+      enum: {
+        values: ['percentage', 'value', 'fixed'],
+        message: '{VALUE} is not a valid added value type'
+      }
+    },
+    value: {
+      type: Number,
+      min: [0, 'Added value cannot be negative']
+    }
+  },
   
   status: { 
     type: String, 
