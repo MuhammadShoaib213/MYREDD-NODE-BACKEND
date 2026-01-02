@@ -29,21 +29,27 @@ exports.createNote = async (req, res) => {
 
 
 exports.getNotesByUserPropertyCustomer = async (req, res) => {
-    const { userId, propertyId, customerId } = req.params;
+    const { propertyId, customerId } = req.params;
+    const userId = req.user?.id || req.user?.userId;
   
     // Optional: Add validation to ensure all IDs are provided
     if (!userId || !propertyId || !customerId) {
-      return res.status(400).json({ message: "All parameters are required: userId, propertyId, and customerId" });
-    }
-
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+      return res.status(400).json({ message: "All parameters are required: propertyId and customerId" });
     }
   
     try {
-      const notes = await Note.find({ userId, propertyId, customerId }).populate('userId propertyId customerId');
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limitRaw = parseInt(req.query.limit, 10) || 50;
+      const limit = Math.min(Math.max(limitRaw, 1), 50);
+      const skip = (page - 1) * limit;
+
+      const notes = await Note.find({ userId, propertyId, customerId })
+        .populate('userId propertyId customerId')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit);
       if (notes.length === 0) {
-        return res.status(404).json({ message: 'No notes found with the provided criteria' });
+        return res.status(200).json([]);
       }
       res.json(notes);
     } catch (error) {

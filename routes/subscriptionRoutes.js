@@ -8,26 +8,27 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 router.post('/subscriptions', authenticateToken, asyncHandler(subscriptionController.addSubscription));
 
-router.get('/subscriptions/check-limit/:userId', authenticateToken, asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-        return res.status(403).json({ message: 'Access denied' });
+router.get('/subscriptions/check-limit', authenticateToken, asyncHandler(async (req, res) => {
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized access' });
     }
     try {
         const subscription = await Subscription.findOne({ userId });
         const propertiesCount = await Property.countDocuments({ userId });
 
         let limit = 0;
-        if (subscription.packageName === "Agent Basic Plan") {
+        const packageName = subscription?.packageName || '';
+        if (packageName === "Agent Basic Plan") {
             limit = 10;
-        } else if (subscription.packageName === "Agent Premium Plan") {
+        } else if (packageName === "Agent Premium Plan") {
             limit = 100;
         }
 
         const limitReached = propertiesCount >= limit;
         console.log("Limit Reached:", limitReached); // Correctly log the status here
         console.log("propertiesCount", propertiesCount);
-        res.send({ limitReached: limitReached, subscriptionType: subscription.packageName });
+        res.send({ limitReached: limitReached, subscriptionType: packageName });
     } catch (error) {
         console.error('Error checking property limit:', error);
         res.status(500).send('Error checking property limit');

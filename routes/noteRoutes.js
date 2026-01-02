@@ -8,7 +8,7 @@ const { asyncHandler } = require('../middleware/errorHandler');
 
 // Use the upload middleware to handle the files
 router.post('/notes', authenticateToken, upload, asyncHandler(noteController.createNote));
-router.get('/notes/:userId/:propertyId/:customerId', authenticateToken, asyncHandler(noteController.getNotesByUserPropertyCustomer));
+router.get('/notes/:propertyId/:customerId', authenticateToken, asyncHandler(noteController.getNotesByUserPropertyCustomer));
 router.delete('/notes/:id', authenticateToken, asyncHandler(noteController.deleteNote));
 
 
