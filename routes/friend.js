@@ -161,12 +161,12 @@ router.get('/list', authenticateToken, asyncHandler(async (req, res) => {
 
 
 router.get('/friends', authenticateToken, asyncHandler(async (req, res) => {
-    const userId = req.query.userId;
+    const userId = req.user?.id || req.user?.userId;
     console.log('Fetching friend list for user ID:', userId);
 
     if (!userId) {
-        console.log('No user ID provided in query.');
-        return res.status(400).send('User ID is required');
+        console.log('No user ID found in token.');
+        return res.status(401).send('Unauthorized: No user ID found');
     }
 
     try {

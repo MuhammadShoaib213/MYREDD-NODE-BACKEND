@@ -269,11 +269,11 @@ const normalizeUploadPath = (req, value) => {
 
 
 exports.getProfile = async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.user?.id || req.user?.userId;
 
   try {
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized access' });
     }
 
     const user = await User.findById(userId).lean();  // Use .lean() for performance if you don't need a full Mongoose document
@@ -349,9 +349,9 @@ function calculateProfileCompletion(user) {
 
 
 exports.updateProfile = async (req, res) => {
-  const userId = req.params.id;
-  if (req.user.role !== 'admin' && req.user.id !== userId) {
-    return res.status(403).json({ message: 'Access denied' });
+  const userId = req.user?.id || req.user?.userId;
+  if (!userId) {
+    return res.status(401).json({ message: 'Unauthorized access' });
   }
 
   const allowedFields = new Set([

@@ -12,6 +12,10 @@ const friendsSchema = new mongoose.Schema({
   updated_at: { type: Date, default: Date.now }
 });
 
+friendsSchema.index({ requester: 1, status: 1 });
+friendsSchema.index({ recipient: 1, status: 1 });
+friendsSchema.index({ updated_at: -1 });
+
 const Friends = mongoose.model('Friends', friendsSchema);
 
 module.exports = Friends;

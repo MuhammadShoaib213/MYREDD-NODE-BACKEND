@@ -83,8 +83,8 @@ router.post('/send-otp', limiter, asyncHandler(authController.sendOtp));
 router.post('/verify-otp', limiter, asyncHandler(authController.verifyOtp));
 
 // Profile routes
-router.get('/profile/:id', authenticateToken, asyncHandler(authController.getProfile));
-router.patch('/profile/:id', authenticateToken, upload, asyncHandler(authController.updateProfile));
+router.get('/profile', authenticateToken, asyncHandler(authController.getProfile));
+router.patch('/profile', authenticateToken, upload, asyncHandler(authController.updateProfile));
 
 // Search users
 router.get('/search', authenticateToken, asyncHandler(authController.searchUsers));

@@ -83,7 +83,16 @@ exports.getFriendRequests = async (req, res) => {
   console.log(`Fetching friend requests for user ${userId}`);
 
   try {
-    const requests = await Friends.find({ recipient: userId, status: 'pending' }).populate('requester', 'firstName lastName');
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limitRaw = parseInt(req.query.limit, 10) || 50;
+    const limit = Math.min(Math.max(limitRaw, 1), 50);
+    const skip = (page - 1) * limit;
+
+    const requests = await Friends.find({ recipient: userId, status: 'pending' })
+      .populate('requester', 'firstName lastName')
+      .sort({ updated_at: -1 })
+      .skip(skip)
+      .limit(limit);
     console.log("Friend requests fetched successfully", requests);
     res.json(requests);
   } catch (error) {
@@ -98,6 +107,11 @@ exports.getFriendsList = async (req, res) => {
     console.log(`Fetching friends list for user ${userId}`);
   
     try {
+      const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+      const limitRaw = parseInt(req.query.limit, 10) || 50;
+      const limit = Math.min(Math.max(limitRaw, 1), 50);
+      const skip = (page - 1) * limit;
+
       const friends = await Friends.find({
         $or: [
           { requester: userId, status: 'accepted' },
@@ -106,6 +120,9 @@ exports.getFriendsList = async (req, res) => {
       })
       .populate('requester', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city country') // Updated to include more details
       .populate('recipient', 'firstName lastName email profilePicture jobTitle whatsappNumber userRole city country') // Updated to include more details
+      .sort({ updated_at: -1 })
+      .skip(skip)
+      .limit(limit)
       .exec();
   
       const results = friends.map(friend => {

@@ -265,15 +265,22 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized access' });
     }
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limitRaw = parseInt(req.query.limit, 10) || 50;
+    const limit = Math.min(Math.max(limitRaw, 1), 50);
+    const skip = (page - 1) * limit;
     console.log(`Fetching properties for user ID: ${userId}`); // Log the user ID being queried
 
     // Fetch all properties associated with the user ID
-    const properties = await Property.find({ userId: userId });
+    const properties = await Property.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
     console.log(`Number of properties found: ${properties.length}`); // Log the count of properties found
 
     if (!properties.length) {
       console.log("No properties found for this user."); // Log if no properties are found
-      return res.status(404).json({ message: "No properties found for this user." });
+      return res.status(200).json([]);
     }
 
     // Extracting the inquiry types from each property
@@ -324,15 +331,22 @@ exports.fetchleads = async (req, res) => {
     if (!userId) {
       return res.status(401).json({ message: 'Unauthorized access' });
     }
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limitRaw = parseInt(req.query.limit, 10) || 50;
+    const limit = Math.min(Math.max(limitRaw, 1), 50);
+    const skip = (page - 1) * limit;
     console.log(`Fetching properties for user ID: ${userId}`);
 
     // Find all properties that belong to this user
-    const properties = await Property.find({ userId: userId });
+    const properties = await Property.find({ userId: userId })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
     console.log(`Number of properties found: ${properties.length}`);
 
     if (!properties.length) {
       console.log("No properties found for this user.");
-      return res.status(404).json({ message: "No properties found for this user." });
+      return res.status(200).json([]);
     }
 
     // Map through each property to include additional details (like the customer name)
