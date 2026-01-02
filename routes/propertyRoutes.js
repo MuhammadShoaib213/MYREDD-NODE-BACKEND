@@ -84,10 +84,22 @@ router.get(
   authenticateToken,
   asyncHandler(PropertyController.fetchUserPropertiesWithInquiryType)
 );
+// Backward-compatible alias (userId is ignored; JWT user is enforced)
+router.get(
+  '/user/:userId',
+  authenticateToken,
+  asyncHandler(PropertyController.fetchUserPropertiesWithInquiryType)
+);
 
 // Get leads for user
 router.get(
   '/lead/user',
+  authenticateToken,
+  asyncHandler(PropertyController.fetchleads)
+);
+// Backward-compatible alias (userId is ignored; JWT user is enforced)
+router.get(
+  '/lead/user/:userId',
   authenticateToken,
   asyncHandler(PropertyController.fetchleads)
 );
