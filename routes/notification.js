@@ -3,7 +3,8 @@ const router = express.Router();
 const { authenticateToken } = require('../middleware/verifyToken'); // typical JWT auth
 const {
   getNotifications,
-  markAsRead
+  markAsRead,
+  markAllRead
 } = require('../controllers/notificationController');
 const { asyncHandler } = require('../middleware/errorHandler');
 
@@ -12,5 +13,7 @@ router.get('/', authenticateToken, asyncHandler(getNotifications));
 
 // PATCH mark specific notification as read
 router.patch('/:id/read', authenticateToken, asyncHandler(markAsRead));
+// POST mark all notifications as read (used by mobile bell)
+router.post('/read-all-sent', authenticateToken, asyncHandler(markAllRead));
 
 module.exports = router;
