@@ -80,14 +80,14 @@ router.get(
 
 // Get user properties with inquiry type
 router.get(
-  '/user/:userId',
+  '/user',
   authenticateToken,
   asyncHandler(PropertyController.fetchUserPropertiesWithInquiryType)
 );
 
 // Get leads for user
 router.get(
-  '/lead/user/:userId',
+  '/lead/user',
   authenticateToken,
   asyncHandler(PropertyController.fetchleads)
 );

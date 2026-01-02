@@ -99,6 +99,29 @@ module.exports = function attachSocket(server) {
     }
   });
 
+  socket.on('join', async ({ conversationId }) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(conversationId)) {
+        socket.emit('error', { message: 'Invalid conversation' });
+        return;
+      }
+      const convo = await Conversation.findById(conversationId).select(
+        'participants',
+      );
+      const isParticipant = convo?.participants.some(
+        (p) => p.toString() === userId,
+      );
+      if (!isParticipant) {
+        socket.emit('error', { message: 'Access denied' });
+        return;
+      }
+      socket.join(conversationId);
+    } catch (error) {
+      console.error('Error joining conversation:', error);
+      socket.emit('error', { message: 'Failed to join conversation' });
+    }
+  });
+
   socket.on('error', (error) => {
     console.error('Socket error:', error);
   });

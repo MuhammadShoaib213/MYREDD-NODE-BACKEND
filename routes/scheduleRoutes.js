@@ -5,7 +5,7 @@ const { authenticateToken } = require('../middleware/verifyToken');
 const { asyncHandler } = require('../middleware/errorHandler');
 
 router.post('/add', authenticateToken, asyncHandler(scheduleController.addSchedule));
-router.get('/user/:userId', authenticateToken, asyncHandler(scheduleController.getSchedulesByUser));
-router.get('/user/all/:userId', authenticateToken, asyncHandler(scheduleController.fetchSchedulesByUserId));
+router.get('/user', authenticateToken, asyncHandler(scheduleController.getSchedulesByUser));
+router.get('/user/all', authenticateToken, asyncHandler(scheduleController.fetchSchedulesByUserId));
 
 module.exports = router;

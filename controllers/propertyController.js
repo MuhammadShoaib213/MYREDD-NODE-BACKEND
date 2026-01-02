@@ -261,9 +261,9 @@ exports.fetchPropertyByyId = async (req, res) => {
 
 exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
   try {
-    const userId = req.params.userId; // Assuming you are passing user ID as a URL parameter
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized access' });
     }
     console.log(`Fetching properties for user ID: ${userId}`); // Log the user ID being queried
 
@@ -320,9 +320,9 @@ exports.fetchUserPropertiesWithInquiryType = async (req, res) => {
 
 exports.fetchleads = async (req, res) => {
   try {
-    const userId = req.params.userId;
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-      return res.status(403).json({ message: 'Access denied' });
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+      return res.status(401).json({ message: 'Unauthorized access' });
     }
     console.log(`Fetching properties for user ID: ${userId}`);
 

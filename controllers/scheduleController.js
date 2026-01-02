@@ -16,9 +16,9 @@ exports.addSchedule = async (req, res) => {
 
 // Get schedules by user ID
 exports.getSchedulesByUser = async (req, res) => {
-    const { userId } = req.params;
-    if (req.user.role !== 'admin' && req.user.id !== userId) {
-        return res.status(403).json({ message: 'Access denied' });
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) {
+        return res.status(401).json({ message: 'Unauthorized access' });
     }
     try {
         const schedules = await Schedule.find({ userId }).populate('propertyId').populate('customerId');
@@ -31,9 +31,9 @@ exports.getSchedulesByUser = async (req, res) => {
 
 exports.fetchSchedulesByUserId = async (req, res) => {
     try {
-        const userId = req.params.userId;
-        if (req.user.role !== 'admin' && req.user.id !== userId) {
-            return res.status(403).json({ message: 'Access denied' });
+        const userId = req.user?.id || req.user?.userId;
+        if (!userId) {
+            return res.status(401).json({ message: 'Unauthorized access' });
         }
         const schedules = await Schedule.find({ userId: userId })
             .populate({
