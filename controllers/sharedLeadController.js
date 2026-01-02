@@ -532,6 +532,14 @@ exports.updateReceivedStatus = async (req, res) => {
     return res.status(400).json({ message: 'Invalid status.' });
   }
 
+  let actorName = '';
+  if (req.user?.firstName && req.user?.lastName) {
+    actorName = `${req.user.firstName} ${req.user.lastName}`;
+  } else {
+    const actor = await User.findById(userId, 'firstName lastName');
+    actorName = actor ? `${actor.firstName} ${actor.lastName}` : 'An agent';
+  }
+
   const lead = await SharedLead.findOneAndUpdate(
     { _id: id, 'recipients.user': userId },
     {
@@ -553,7 +561,7 @@ exports.updateReceivedStatus = async (req, res) => {
 
   await Notification.create({
     userId: lead.sharedBy._id,
-    message: `${req.user.firstName} ${req.user.lastName} ${status.toLowerCase()} your Inquiry ${lead.leadId}`,
+    message: `${actorName} ${status.toLowerCase()} your Inquiry ${lead.leadId}`,
     type: 'inquiry_accepted',
     metadata: {
       inquiryId: lead.id,

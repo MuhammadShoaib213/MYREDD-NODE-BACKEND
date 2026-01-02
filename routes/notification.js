@@ -15,5 +15,7 @@ router.get('/', authenticateToken, asyncHandler(getNotifications));
 router.patch('/:id/read', authenticateToken, asyncHandler(markAsRead));
 // POST mark all notifications as read (used by mobile bell)
 router.post('/read-all-sent', authenticateToken, asyncHandler(markAllRead));
+// POST mark all notifications as read (generic)
+router.post('/read-all', authenticateToken, asyncHandler(markAllRead));
 
 module.exports = router;
