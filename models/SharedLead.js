@@ -32,4 +32,7 @@ const sharedLeadSchema = new mongoose.Schema({
   sharedAt:     { type: Date, default: Date.now }
 });
 
+sharedLeadSchema.index({ sharedBy: 1, sharedAt: -1 });
+sharedLeadSchema.index({ 'recipients.user': 1 });
+
 module.exports = mongoose.model('SharedLead', sharedLeadSchema);
