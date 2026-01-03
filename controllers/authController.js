@@ -10,6 +10,7 @@ const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TO
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const Invitation = require('../models/Invitation');
 const { limiter } = require('../middleware/rateLimiter');
+const { buildAssetUrl } = require('../utils/urlUtils');
 
 exports.signup = async (req, res) => {
   const { firstName, lastName, email, password, userRole, cnic, phoneNumber, agencyId, country, city } = req.body;
@@ -254,18 +255,7 @@ exports.verifyOtp = async (req, res) => {
   res.json({ message: 'Email verified successfully!' });
 };
 
-const normalizeUploadPath = (req, value) => {
-  if (!value) return value;
-  if (typeof value !== 'string') return value;
-  if (value.startsWith('http://') || value.startsWith('https://')) return value;
-  const filename = path.basename(value);
-  const relative = value.startsWith('/uploads/')
-    ? value
-    : `/uploads/${filename}`;
-  if (!req) return relative;
-  const base = `${req.protocol}://${req.get('host')}`;
-  return encodeURI(`${base}${relative}`);
-};
+const normalizeUploadPath = (req, value) => buildAssetUrl(req, value);
 
 
 exports.getProfile = async (req, res) => {

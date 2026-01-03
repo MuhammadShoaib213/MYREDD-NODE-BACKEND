@@ -2,6 +2,7 @@ const Customer = require('../models/Customer');
 const multer = require('multer');
 const InviteToken = require('../models/InviteToken');
 const path = require('path');
+const { buildAssetUrl } = require('../utils/urlUtils');
 
 // Set up multer for file storage
 // const sanitizeFilename = (filename) => {
@@ -79,6 +80,15 @@ const upload = multer({
   }
 });
 
+const attachProfileUrl = (req, customer) => {
+  if (!customer) return customer;
+  const obj = customer.toObject ? customer.toObject() : { ...customer };
+  if (obj.profilePicture) {
+    obj.profilePicture = buildAssetUrl(req, obj.profilePicture);
+  }
+  return obj;
+};
+
 // Controller to handle fetching customers
 exports.getCustomers = async (req, res) => {
   try {
@@ -86,7 +96,7 @@ exports.getCustomers = async (req, res) => {
     console.log(`Fetching customers for user ID: ${userId}`);
     const customers = await Customer.find({ userId: userId });
     console.log(`Customers retrieved: ${customers.length} found`);
-    res.json(customers);
+    res.json(customers.map((c) => attachProfileUrl(req, c)));
   } catch (error) {
     console.error('Failed to retrieve customers:', error);
     res.status(500).json({ message: `Failed to retrieve customers due to server error: ${error.message}` });
@@ -175,7 +185,9 @@ exports.addCustomer = async (req, res) => {
     await newCustomer.save();
     console.log('Customer saved successfully:', newCustomer);
 
-    res.status(201).json({ message: 'Customer added successfully', customer: newCustomer });
+    res
+      .status(201)
+      .json({ message: 'Customer added successfully', customer: attachProfileUrl(req, newCustomer) });
   } catch (error) {
     console.error('Error adding customer:', error);
     if (error.code === 11000) {
@@ -240,7 +252,7 @@ exports.checkCustomer = async (req, res) => {
 
     // If we reach here, the customer belongs to the current user
     console.log('Customer found and belongs to user:', userId);
-    return res.json({ exists: true, customer });
+    return res.json({ exists: true, customer: attachProfileUrl(req, customer) });
   } catch (error) {
     console.error('Database query error during customer check:', error);
     return res
@@ -259,7 +271,7 @@ exports.getCustomerDetail = async (req, res) => {
       return res.status(404).json({ message: 'Customer not found' });
     }
     console.log('Customer retrieved:', customer);
-    res.json(customer);
+    res.json(attachProfileUrl(req, customer));
   } catch (error) {
     console.error('Failed to retrieve customer:', error);
     res.status(500).json({ message: `Internal server error while retrieving customer: ${error.message}` });

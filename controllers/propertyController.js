@@ -3,8 +3,23 @@ const Customer = require('../models/Customer');
 const { errors, asyncHandler } = require('../middleware/errorHandler');
 const Counter = require('../models/Counter');
 const { getPaginationOptions, paginatedQuery, withTenantScope, PROJECTIONS } = require('../utils/mongooseHelpers');
+const { buildAssetUrl } = require('../utils/urlUtils');
 const { deleteUploadedFile, cleanupOnError } = require('../middleware/uploadSecurity');
 const path = require('path');
+
+const normalizePropertyMedia = (req, property) => {
+  if (!property) return property;
+  const obj = property.toObject ? property.toObject() : { ...property };
+  const mapArray = (arr) =>
+    Array.isArray(arr)
+      ? arr.map((value) => buildAssetUrl(req, value)).filter(Boolean)
+      : arr;
+  if (obj.frontPictures) obj.frontPictures = mapArray(obj.frontPictures);
+  if (obj.propertyPictures) obj.propertyPictures = mapArray(obj.propertyPictures);
+  if (obj.images) obj.images = mapArray(obj.images);
+  if (obj.video) obj.video = buildAssetUrl(req, obj.video);
+  return obj;
+};
 
 exports.addProperty = asyncHandler(async (req, res) => {
   // 1. Get user from authenticated token (NOT from req.body)
@@ -138,20 +153,22 @@ exports.fetchAllProperties = async (req, res) => {
     const maxLimit = 100;
     const safeLimit = Math.min(limit, maxLimit);
 
-    const [properties, total] = await Promise.all([
-      Property.find({ userId })
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(safeLimit)
-        .lean(),
-      Property.countDocuments({ userId })
-    ]);
+      const [properties, total] = await Promise.all([
+        Property.find({ userId })
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(safeLimit)
+          .lean(),
+        Property.countDocuments({ userId })
+      ]);
 
-    res.status(200).json({
-      data: properties,
-      pagination: {
-        page,
-        limit: safeLimit,
+      const normalized = properties.map((p) => normalizePropertyMedia(req, p));
+
+      res.status(200).json({
+        data: normalized,
+        pagination: {
+          page,
+          limit: safeLimit,
         total,
         pages: Math.ceil(total / safeLimit),
         hasMore: page * safeLimit < total
@@ -179,11 +196,11 @@ exports.fetchPropertyById = asyncHandler(async (req, res) => {
     throw errors.notFound('Property');
   }
   
-  res.json({
-    success: true,
-    data: property
+    res.json({
+      success: true,
+      data: normalizePropertyMedia(req, property)
+    });
   });
-});
 
 
 exports.fetchPropertyAd = async (req, res) => {
@@ -195,7 +212,7 @@ exports.fetchPropertyAd = async (req, res) => {
           return res.status(404).json({ message: "Property not found" });
       }
 
-      res.status(200).json(property);
+        res.status(200).json(normalizePropertyMedia(req, property));
   } catch (error) {
       console.error('Failed to fetch property:', error);
       res.status(500).json({ message: "Failed to fetch property", error: error.message });
@@ -221,9 +238,9 @@ exports.fetchPropertyByyId = async (req, res) => {
     const customerName = customer ? customer.fullName : 'Unknown'; // Assuming the customer model has a fullName field
     const customerId = customer ? customer._id : 'Unknown';
 
-    const propertyWithCustomerName = {
-      _id: property._id,
-      cnicNumber: property.cnicNumber,
+      const propertyWithCustomerName = {
+        _id: property._id,
+        cnicNumber: property.cnicNumber,
       purpose: property.purpose,
       status: property.status,
       inquiryType: property.inquiryType,
@@ -244,15 +261,15 @@ exports.fetchPropertyByyId = async (req, res) => {
       timeForPayment: property.timeForPayment,
       images: property.images,
       video: property.video,
-      dateAdded: property.createdAt,
-      customerName: customerName, // Add the customer name to the response
-      customerId: customerId,
-      priority: property.priority,
-      commission: property.commission 
-    };
+        dateAdded: property.createdAt,
+        customerName: customerName, // Add the customer name to the response
+        customerId: customerId,
+        priority: property.priority,
+        commission: property.commission 
+      };
 
-    console.log("Property with customer name prepared for response");
-    res.status(200).json(propertyWithCustomerName);
+      console.log("Property with customer name prepared for response");
+      res.status(200).json(normalizePropertyMedia(req, propertyWithCustomerName));
   } catch (error) {
     console.error('Failed to fetch property:', error);
     res.status(500).json({ message: "Failed to fetch property", error: error.message });
@@ -357,10 +374,10 @@ exports.fetchleads = async (req, res) => {
         // Fetch the customer using the CNIC number
         const customer = await Customer.findOne({ cnicNumber: property.cnicNumber });
 
-        return {
-          _id: property._id,
-          propertyCode: property.propertyCode,
-          cnicNumber: property.cnicNumber,
+          const propertyWithCustomerName = {
+            _id: property._id,
+            propertyCode: property.propertyCode,
+            cnicNumber: property.cnicNumber,
           status: property.status,
           inquiryType: property.inquiryType,
           propertyType: property.propertyType,
@@ -399,12 +416,13 @@ exports.fetchleads = async (req, res) => {
           addedValue: property.addedValue,         // Added value object
           frontPictures: property.frontPictures,   // Array of image paths for front pictures
           propertyPictures: property.propertyPictures, // Array of property image paths
-          video: property.video,
-          dateAdded: property.createdAt,
-          customerName: customer ? customer.fullName : 'Unknown'  // Assuming Customer has a fullName field
-        };
-      })
-    );
+            video: property.video,
+            dateAdded: property.createdAt,
+            customerName: customer ? customer.fullName : 'Unknown'  // Assuming Customer has a fullName field
+          };
+          return normalizePropertyMedia(req, propertyWithCustomerName);
+        })
+      );
 
     console.log("Properties with customer names prepared for response");
     res.status(200).json(propertiesWithCustomerNames);
@@ -507,12 +525,12 @@ exports.updateProperty = asyncHandler(async (req, res) => {
   Object.assign(property, body);
   await property.save();
   
-  res.json({
-    success: true,
-    message: 'Property updated successfully',
-    data: property
+    res.json({
+      success: true,
+      message: 'Property updated successfully',
+      data: normalizePropertyMedia(req, property)
+    });
   });
-});
 
 exports.getOppositeInquiryType = (inquiryType) => {
   switch (inquiryType) {
@@ -596,8 +614,8 @@ exports.searchProperties = async (req, res) => {
     console.log('searchProperties - Final query:', query);
 
     // 5. Fetch matching properties
-    const matches = await Property.find(query);
-    res.status(200).json(matches);
+      const matches = await Property.find(query);
+      res.status(200).json(matches.map((p) => normalizePropertyMedia(req, p)));
   } catch (error) {
     console.error('Error in searchProperties:', error);
     res.status(500).json({
