@@ -295,6 +295,8 @@ const SharedLead   = require('../models/SharedLead');
 const User         = require('../models/User');
 const Property     = require('../models/Property');
 const Notification = require('../models/Notification');
+const Conversation = require('../models/Conversation');
+const Message      = require('../models/Message');
 
 /*
 |--------------------------------------------------------------------------
@@ -526,7 +528,7 @@ exports.getReceivedLeads = async (req, res) => {
 exports.updateReceivedStatus = async (req, res) => {
   const userId = req.user.id;
   const { id } = req.params;                 // SharedLead _id
-  const { status } = req.body;               // 'Accepted' | 'Rejected'
+  const { status, note } = req.body;               // 'Accepted' | 'Rejected'
 
   if (!['Accepted', 'Rejected'].includes(status)) {
     return res.status(400).json({ message: 'Invalid status.' });
@@ -570,5 +572,47 @@ exports.updateReceivedStatus = async (req, res) => {
     }
   });
 
-  res.json({ message: `Marked as ${status}.` });
+  let messageSent = false;
+  let conversationId = null;
+  const noteText = typeof note === 'string' ? note.trim() : '';
+
+  if (status === 'Accepted' && noteText.length > 0) {
+    try {
+      const meObj = new mongoose.Types.ObjectId(userId);
+      const otherObj = new mongoose.Types.ObjectId(lead.sharedBy._id);
+      const participantsSorted = [meObj, otherObj].sort((a, b) =>
+        a.toString().localeCompare(b.toString())
+      );
+
+      const convo = await Conversation.findOneAndUpdate(
+        { participants: participantsSorted },
+        { $setOnInsert: { participants: participantsSorted } },
+        { new: true, upsert: true }
+      );
+
+      conversationId = convo._id.toString();
+
+      const msg = await Message.create({
+        conversationId: convo._id,
+        senderId: userId,
+        text: noteText
+      });
+
+      await Conversation.findByIdAndUpdate(convo._id, {
+        lastMessage: noteText,
+        updatedAt: new Date()
+      });
+
+      req.io?.to(convo._id.toString()).emit('message', msg);
+      messageSent = true;
+    } catch (err) {
+      console.error('updateReceivedStatus message send failed:', err);
+    }
+  }
+
+  res.json({
+    message: `Marked as ${status}.`,
+    messageSent,
+    conversationId
+  });
 };
