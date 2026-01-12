@@ -29,10 +29,42 @@ router.get('/cities', asyncHandler((req, res) => {
  */
 // GET /api/places/cities/:cityName/areas
 router.get('/cities/:cityName/areas', asyncHandler((req, res) => {
-  const { cityName } = req.params;
-  const filePath = path.join(__dirname, '..', 'data', `${cityName}.json`);
+  const rawCityName = req.params.cityName || '';
+  const normalizedCityName = rawCityName.replace(/\s+/g, ' ').trim();
+  const dataDir = path.join(__dirname, '..', 'data');
 
   try {
+    if (!normalizedCityName) {
+      console.warn('[places] Empty cityName param');
+      return res.json([]);
+    }
+
+    const files = fs
+      .readdirSync(dataDir)
+      .filter((f) => f.toLowerCase().endsWith('.json'))
+      .filter((f) => f.toLowerCase() !== 'cities.json');
+
+    const findFile = (name) =>
+      files.find(
+        (f) => path.parse(f).name.toLowerCase() === name.toLowerCase(),
+      );
+
+    const primaryName = normalizedCityName.split(',')[0].trim();
+    let fileName = findFile(normalizedCityName) || findFile(primaryName);
+
+    if (!fileName && normalizedCityName.toLowerCase().endsWith('.json')) {
+      fileName = findFile(path.parse(normalizedCityName).name);
+    }
+
+    if (!fileName) {
+      console.warn(
+        `[places] City file not found for "${rawCityName}" (normalized: "${normalizedCityName}")`,
+      );
+      return res.json([]);
+    }
+
+    const filePath = path.join(dataDir, fileName);
+
     // 1) Check if file exists
     if (!fs.existsSync(filePath)) {
       // If the file doesn't exist, just return an empty array
@@ -41,7 +73,7 @@ router.get('/cities/:cityName/areas', asyncHandler((req, res) => {
 
     // 2) Read the file content
     const fileContent = fs.readFileSync(filePath, 'utf8');
-    
+
     // 3) If the file is empty or just whitespace, return an empty array
     if (!fileContent.trim()) {
       return res.json([]);
