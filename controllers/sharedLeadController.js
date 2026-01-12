@@ -583,12 +583,31 @@ exports.updateReceivedStatus = async (req, res) => {
       const participantsSorted = [meObj, otherObj].sort((a, b) =>
         a.toString().localeCompare(b.toString())
       );
+      const participantsKey = participantsSorted
+        .map((p) => p.toString())
+        .join('_');
 
-      const convo = await Conversation.findOneAndUpdate(
-        { participants: participantsSorted },
-        { $setOnInsert: { participants: participantsSorted } },
-        { new: true, upsert: true }
-      );
+      let convo = await Conversation.findOne({ participantsKey });
+
+      if (!convo) {
+        convo = await Conversation.findOne({
+          participants: { $all: [meObj, otherObj] },
+          'participants.2': { $exists: false },
+        });
+
+        if (convo && !convo.participantsKey) {
+          convo.participantsKey = participantsKey;
+          await convo.save();
+        }
+      }
+
+      if (!convo) {
+        convo = await Conversation.findOneAndUpdate(
+          { participantsKey },
+          { $setOnInsert: { participants: participantsSorted, participantsKey } },
+          { new: true, upsert: true }
+        );
+      }
 
       conversationId = convo._id.toString();
 

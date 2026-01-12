@@ -13,6 +13,7 @@ const conversationSchema = new mongoose.Schema(
 
     /* The last message text – keep as plain string for sidebar preview.
        You can always populate the full message separately. */
+    participantsKey: { type: String },
     lastMessage: { type: String, trim: true },
   },
   { timestamps: true }
@@ -25,11 +26,13 @@ const conversationSchema = new mongoose.Schema(
 /* 1️⃣  Always store participant IDs in ascending order
        so [A,B] and [B,A] yield the *same* document/key. */
 conversationSchema.pre('validate', function (next) {
-  if (Array.isArray(this.participants)) {
-    this.participants = this.participants
+  if (Array.isArray(this.participants) && this.participants.length > 0) {
+    const sorted = this.participants
       .map(id => id.toString())
       .sort()                          // alphabetical ObjectId order
       .map(id => mongoose.Types.ObjectId(id));
+    this.participants = sorted;
+    this.participantsKey = sorted.map(id => id.toString()).join('_');
   }
   next();
 });
@@ -41,8 +44,8 @@ conversationSchema.path('participants').validate(function (arr) {
 
 /* 3️⃣  One unique conversation per unordered pair (or group) */
 conversationSchema.index(
-  { participants: 1 },
-  { unique: true }                    // prevents duplicate documents
+  { participantsKey: 1 },
+  { unique: true, sparse: true }
 );
 
 /* 4️⃣  Sidebar sorting index */
