@@ -509,7 +509,7 @@ exports.getReceivedLeads = async (req, res) => {
     const leads = await SharedLead.find({ 'recipients.user': userId })
       .populate('leadId', 'propertyCode propertySubType inquiryType')
       .populate('sharedBy', 'firstName lastName')
-      .select('leadId sharedAt recipients.$');
+      .select('leadId sharedAt recipients.$ sharedBy sharedByName');
 
     res.json(leads);
   } catch (err) {
